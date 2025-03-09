@@ -15,6 +15,7 @@
     "update-expense-data": "node scripts/update-expense-data.mjs"
   },
   "dependencies": {
+    "dotenv": "^16.4.7",
     "esm": "^3.2.25",
     "firebase": "^11.4.0",
     "next": "15.2.1",
