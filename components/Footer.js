@@ -12,8 +12,8 @@ export default function Footer() {
               <span className="text-blue-500">W</span>esterners
             </h3>
             <p className="text-gray-400 mb-6 leading-relaxed">
-              함께 모여 지식을 공유하고 네트워크를 형성하는 커뮤니티입니다.
-              우리는 정기적인 모임을 통해 서로의 경험과 지식을 나누고 있습니다.
+              싱가포르에서 함께 고생하며 일하는 사람들이 모여 만든 커뮤니티입니다.
+              정기모임을 통해 돈독한 우정을 나누고 있습니다.
             </p>
           </div>
           
@@ -45,20 +45,20 @@ export default function Footer() {
                 <svg className="w-5 h-5 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                 </svg>
-                info@westerners.com
+                westerners.sg@gmail.com
               </li>
               <li className="flex items-center">
                 <svg className="w-5 h-5 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
                 </svg>
-                02-123-4567
+                +65 8123-4567
               </li>
               <li className="flex items-center">
                 <svg className="w-5 h-5 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
-                서울특별시 강남구 테헤란로 123
+                10 Marina Boulevard, Marina Bay Financial Centre, Singapore 018983
               </li>
             </ul>
           </div>

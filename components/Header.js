@@ -76,6 +76,18 @@ export default function Header() {
                 회비 관리
               </Link>
             </li>
+            <li>
+              <Link 
+                href="/gallery" 
+                className={`transition-all duration-300 hover:text-blue-600 ${
+                  isActive('/gallery') 
+                    ? 'font-semibold text-blue-600' 
+                    : 'font-medium'
+                }`}
+              >
+                갤러리
+              </Link>
+            </li>
           </ul>
         </nav>
 
@@ -127,6 +139,17 @@ export default function Header() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 회비 관리
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/gallery" 
+                className={`block py-2 text-gray-800 hover:text-blue-600 ${
+                  isActive('/gallery') ? 'font-semibold text-blue-600' : ''
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                갤러리
               </Link>
             </li>
           </ul>

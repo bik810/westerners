@@ -325,7 +325,7 @@ export default function Fees() {
                               </div>
                               <div>
                                 <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">잔액</h4>
-                                <div className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                <div className={`text-2xl font-bold text-blue-600`}>
                                   {formatCurrency(balance)}
                                 </div>
                               </div>
