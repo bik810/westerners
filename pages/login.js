@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { loginUser } from '../lib/firestoreService';
@@ -13,12 +13,18 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { currentUser } = useAuth();
+  const { redirect } = router.query;
 
-  // 이미 로그인한 경우 홈으로 리디렉션
-  if (currentUser) {
-    router.push('/');
-    return null;
-  }
+  // 이미 로그인한 경우 홈 또는 원래 가려던 페이지로 리디렉션
+  useEffect(() => {
+    if (currentUser) {
+      if (redirect) {
+        router.push(decodeURIComponent(redirect));
+      } else {
+        router.push('/');
+      }
+    }
+  }, [currentUser, redirect, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,7 +38,8 @@ export default function Login() {
       setError('');
       setLoading(true);
       await loginUser(email, password);
-      router.push('/');
+      
+      // 로그인 성공 후 리디렉션은 useEffect에서 처리됨
     } catch (error) {
       console.error('로그인 오류:', error);
       
@@ -47,6 +54,10 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  if (currentUser) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

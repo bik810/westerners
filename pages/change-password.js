@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { changePassword } from '../lib/firestoreService';
@@ -14,12 +14,14 @@ export default function ChangePassword() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { currentUser, userProfile } = useAuth();
+  const { redirect } = router.query;
 
   // 로그인하지 않은 경우 로그인 페이지로 리디렉션
-  if (!currentUser) {
-    router.push('/login');
-    return null;
-  }
+  useEffect(() => {
+    if (!currentUser && !loading) {
+      router.push('/login');
+    }
+  }, [currentUser, loading, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,12 +45,19 @@ export default function ChangePassword() {
       
       setSuccess('비밀번호가 성공적으로 변경되었습니다.');
       
-      // 첫 로그인이 아닌 경우 3초 후 홈으로 리디렉션
-      if (!userProfile?.isFirstLogin) {
-        setTimeout(() => {
+      // 리디렉션 처리
+      setTimeout(() => {
+        if (redirect) {
+          // URL 디코딩하여 원래 가려던 페이지로 이동
+          router.push(decodeURIComponent(redirect));
+        } else if (userProfile?.isFirstLogin) {
+          // 첫 로그인인 경우 홈으로 이동
           router.push('/');
-        }, 3000);
-      }
+        } else {
+          // 그 외의 경우 홈으로 이동
+          router.push('/');
+        }
+      }, 2000);
     } catch (error) {
       console.error('비밀번호 변경 오류:', error);
       
@@ -64,6 +73,10 @@ export default function ChangePassword() {
       setLoading(false);
     }
   };
+
+  if (!currentUser) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
