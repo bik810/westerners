@@ -8,7 +8,7 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
-  const { user, userProfile, hasPermission } = useAuth();
+  const { currentUser, userProfile, hasPermission } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -114,7 +114,7 @@ export default function Header() {
                 </Link>
               </li>
             )}
-            {user ? (
+            {currentUser ? (
               <li>
                 <button
                   onClick={handleLogout}
@@ -214,7 +214,7 @@ export default function Header() {
                 </Link>
               </li>
             )}
-            {user ? (
+            {currentUser ? (
               <li>
                 <button
                   onClick={() => {
