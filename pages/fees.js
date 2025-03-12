@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import Modal from '../components/Modal';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { getAllMembers, getAllExpenses, addMember, updateMember, deleteMember, addExpense, updateExpense, deleteExpense } from '../lib/firestoreService';
+import { useAuth } from '../lib/authContext';
 
 export default function Fees() {
   const [members, setMembers] = useState([]);
@@ -12,6 +13,10 @@ export default function Fees() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { userProfile } = useAuth();
+  
+  // 권한 확인 함수
+  const canEdit = userProfile && (userProfile.role === 'admin' || userProfile.role === 'treasurer');
   
   // 모달 관련 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -277,7 +282,7 @@ export default function Fees() {
   };
 
   return (
-    <ProtectedRoute requiredRole="treasurer">
+    <ProtectedRoute>
       <div className="flex flex-col min-h-screen">
         <Head>
           <title>Westerners - 회비 관리</title>
@@ -287,13 +292,28 @@ export default function Fees() {
 
         <Header />
 
-        {/* Hero Section */}
         <section className="pt-32 pb-20 bg-gradient-to-r from-blue-900 to-blue-800 text-white">
           <div className="container mx-auto px-6 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">회비 장부 관리</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">회비 관리</h1>
             <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-              모임의 재정 상태와 회비 납부 현황을 투명하게 관리합니다
+              모임의 회비 수입과 지출을 관리하고 투명하게 공개합니다.
             </p>
+            {canEdit && (
+              <div className="mt-10 flex flex-wrap justify-center gap-4">
+                <button
+                  onClick={() => handleOpenModal('add-income')}
+                  className="px-6 py-3 bg-white text-blue-800 font-semibold rounded-lg shadow-md hover:bg-blue-50 transition-colors duration-300"
+                >
+                  회비 수입 추가
+                </button>
+                <button
+                  onClick={() => handleOpenModal('add-expense')}
+                  className="px-6 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-800 transition-colors duration-300"
+                >
+                  회비 지출 추가
+                </button>
+              </div>
+            )}
           </div>
         </section>
 
@@ -472,15 +492,14 @@ export default function Fees() {
                       <div className="animate-fadeIn">
                         <div className="flex justify-between items-center mb-6">
                           <h3 className="text-xl font-bold text-gray-800">회비 수입 내역</h3>
-                          <button
-                            onClick={() => handleOpenModal('add-income')}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
-                          >
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            수입 추가
-                          </button>
+                          {canEdit && (
+                            <button
+                              onClick={() => handleOpenModal('add-income')}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300"
+                            >
+                              회비 수입 추가
+                            </button>
+                          )}
                         </div>
                         
                         <div className="overflow-x-auto bg-white rounded-lg">
@@ -528,20 +547,22 @@ export default function Fees() {
                                       {member.note || (member.paid ? '납부 완료' : '미납')}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                      <div className="flex space-x-2">
-                                        <button
-                                          onClick={() => handleOpenModal('edit-income', member)}
-                                          className="text-blue-600 hover:text-blue-800"
-                                        >
-                                          수정
-                                        </button>
-                                        <button
-                                          onClick={() => handleDelete('income', member.id)}
-                                          className="text-red-600 hover:text-red-800"
-                                        >
-                                          삭제
-                                        </button>
-                                      </div>
+                                      {canEdit && (
+                                        <div className="flex space-x-2">
+                                          <button
+                                            onClick={() => handleOpenModal('edit-income', member)}
+                                            className="text-blue-600 hover:text-blue-800"
+                                          >
+                                            수정
+                                          </button>
+                                          <button
+                                            onClick={() => handleDelete('income', member.id)}
+                                            className="text-red-600 hover:text-red-800"
+                                          >
+                                            삭제
+                                          </button>
+                                        </div>
+                                      )}
                                     </td>
                                   </tr>
                                 ))}
@@ -559,15 +580,14 @@ export default function Fees() {
                       <div className="animate-fadeIn">
                         <div className="flex justify-between items-center mb-6">
                           <h3 className="text-xl font-bold text-gray-800">회비 지출 내역</h3>
-                          <button
-                            onClick={() => handleOpenModal('add-expense')}
-                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center"
-                          >
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            지출 추가
-                          </button>
+                          {canEdit && (
+                            <button
+                              onClick={() => handleOpenModal('add-expense')}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300"
+                            >
+                              회비 지출 추가
+                            </button>
+                          )}
                         </div>
                         
                         <div className="overflow-x-auto bg-white rounded-lg">
@@ -615,20 +635,22 @@ export default function Fees() {
                                       {expense.note || '-'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                      <div className="flex space-x-2">
-                                        <button
-                                          onClick={() => handleOpenModal('edit-expense', expense)}
-                                          className="text-blue-600 hover:text-blue-800"
-                                        >
-                                          수정
-                                        </button>
-                                        <button
-                                          onClick={() => handleDelete('expense', expense.id)}
-                                          className="text-red-600 hover:text-red-800"
-                                        >
-                                          삭제
-                                        </button>
-                                      </div>
+                                      {canEdit && (
+                                        <div className="flex space-x-2">
+                                          <button
+                                            onClick={() => handleOpenModal('edit-expense', expense)}
+                                            className="text-blue-600 hover:text-blue-800"
+                                          >
+                                            수정
+                                          </button>
+                                          <button
+                                            onClick={() => handleDelete('expense', expense.id)}
+                                            className="text-red-600 hover:text-red-800"
+                                          >
+                                            삭제
+                                          </button>
+                                        </div>
+                                      )}
                                     </td>
                                   </tr>
                                 ))}
