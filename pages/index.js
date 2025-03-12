@@ -4,12 +4,14 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { useAuth } from '../lib/authContext';
 import { db } from '../lib/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 
 export default function Home() {
   const [recentPhotos, setRecentPhotos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { user, userProfile } = useAuth();
 
   // 최근 갤러리 사진 가져오기
   useEffect(() => {
@@ -62,15 +64,37 @@ export default function Home() {
             싱가포르에서 함께 고생하며 일하는 사람들이 모여 만든 커뮤니티입니다. 정기모임을 통해 돈독한 우정을 나누고 있습니다.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link href="/rules" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
-              회칙 보기
-            </Link>
-            <Link href="/fees" className="bg-transparent hover:bg-white/10 text-white font-semibold py-3 px-8 rounded-full border-2 border-white transition-all duration-300 transform hover:scale-105">
-              회비 관리
-            </Link>
-            <Link href="/gallery" className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
-              갤러리
-            </Link>
+            {user ? (
+              // 로그인한 사용자에게 표시할 버튼
+              <>
+                <Link href="/rules" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
+                  회칙 보기
+                </Link>
+                <Link href="/gallery" className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
+                  갤러리
+                </Link>
+                {userProfile && (userProfile.role === 'treasurer' || userProfile.role === 'admin') && (
+                  <Link href="/fees" className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
+                    회비 관리
+                  </Link>
+                )}
+                {userProfile && userProfile.role === 'admin' && (
+                  <Link href="/admin/members" className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
+                    회원 관리
+                  </Link>
+                )}
+              </>
+            ) : (
+              // 로그인하지 않은 사용자에게 표시할 버튼
+              <>
+                <Link href="/rules" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
+                  회칙 보기
+                </Link>
+                <Link href="/login" className="bg-white text-blue-700 hover:bg-blue-50 font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
+                  로그인
+                </Link>
+              </>
+            )}
           </div>
         </div>
         <div className="absolute bottom-10 left-0 right-0 flex justify-center">
@@ -157,7 +181,7 @@ export default function Home() {
           ) : recentPhotos.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {recentPhotos.map((photo) => (
-                <Link href="/gallery" key={photo.id} className="block">
+                <Link href={user ? "/gallery" : "/login"} key={photo.id} className="block">
                   <div className="bg-white rounded-lg overflow-hidden shadow-lg transform transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
                     <div className="relative h-48 w-full">
                       <Image 
@@ -180,8 +204,8 @@ export default function Home() {
           )}
           
           <div className="text-center mt-10">
-            <Link href="/gallery" className="bg-white text-blue-600 hover:bg-blue-50 font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg inline-block">
-              갤러리 더 보기
+            <Link href={user ? "/gallery" : "/login"} className="bg-white text-blue-600 hover:bg-blue-50 font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg inline-block">
+              {user ? "갤러리 더 보기" : "로그인하여 갤러리 보기"}
             </Link>
           </div>
         </div>

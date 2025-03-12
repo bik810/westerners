@@ -12,7 +12,8 @@
     "delete-old-collections": "node scripts/deleteOldCollections.mjs",
     "update-data-structure": "node scripts/updateDataStructure.mjs",
     "update-income-data": "node scripts/update-income-data.mjs",
-    "update-expense-data": "node scripts/update-expense-data.mjs"
+    "update-expense-data": "node scripts/update-expense-data.mjs",
+    "init-admin": "node scripts/init-admin.js"
   },
   "dependencies": {
     "dotenv": "^16.4.7",

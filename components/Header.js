@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useAuth } from '../lib/authContext';
+import { logoutUser } from '../lib/firestoreService';
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
+  const { user, userProfile, hasPermission } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,6 +25,15 @@ export default function Header() {
 
   const isActive = (path) => {
     return router.pathname === path;
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      router.push('/login');
+    } catch (error) {
+      console.error('로그아웃 중 오류 발생:', error);
+    }
   };
 
   return (
@@ -88,6 +100,43 @@ export default function Header() {
                 갤러리
               </Link>
             </li>
+            {hasPermission && hasPermission('admin') && (
+              <li>
+                <Link 
+                  href="/admin/members" 
+                  className={`transition-all duration-300 hover:text-blue-600 ${
+                    isActive('/admin/members') 
+                      ? 'font-semibold text-blue-600' 
+                      : 'font-medium'
+                  }`}
+                >
+                  회원 관리
+                </Link>
+              </li>
+            )}
+            {user ? (
+              <li>
+                <button
+                  onClick={handleLogout}
+                  className="transition-all duration-300 hover:text-blue-600 font-medium"
+                >
+                  로그아웃
+                </button>
+              </li>
+            ) : (
+              <li>
+                <Link 
+                  href="/login" 
+                  className={`transition-all duration-300 hover:text-blue-600 ${
+                    isActive('/login') 
+                      ? 'font-semibold text-blue-600' 
+                      : 'font-medium'
+                  }`}
+                >
+                  로그인
+                </Link>
+              </li>
+            )}
           </ul>
         </nav>
 
@@ -103,7 +152,7 @@ export default function Header() {
       {/* Mobile Navigation */}
       <div 
         className={`md:hidden absolute w-full bg-white shadow-lg transition-all duration-300 ease-in-out ${
-          mobileMenuOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+          mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
         }`}
       >
         <nav className="container mx-auto px-6 py-4">
@@ -152,6 +201,44 @@ export default function Header() {
                 갤러리
               </Link>
             </li>
+            {hasPermission && hasPermission('admin') && (
+              <li>
+                <Link 
+                  href="/admin/members" 
+                  className={`block py-2 text-gray-800 hover:text-blue-600 ${
+                    isActive('/admin/members') ? 'font-semibold text-blue-600' : ''
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  회원 관리
+                </Link>
+              </li>
+            )}
+            {user ? (
+              <li>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block py-2 text-gray-800 hover:text-blue-600"
+                >
+                  로그아웃
+                </button>
+              </li>
+            ) : (
+              <li>
+                <Link 
+                  href="/login" 
+                  className={`block py-2 text-gray-800 hover:text-blue-600 ${
+                    isActive('/login') ? 'font-semibold text-blue-600' : ''
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  로그인
+                </Link>
+              </li>
+            )}
           </ul>
         </nav>
       </div>

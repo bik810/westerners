@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Modal from '../components/Modal';
+import ProtectedRoute from '../components/ProtectedRoute';
 import { db, storage } from '../lib/firebase';
 import { collection, doc, getDoc, setDoc, getDocs, addDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
@@ -51,88 +52,118 @@ export default function Gallery() {
     fetchPhotos();
   }, []);
 
+  // Firebase Storage 초기화 확인
+  useEffect(() => {
+    try {
+      console.log('Firebase Storage 초기화 확인');
+      console.log('Storage 객체:', storage);
+      console.log('Storage 버킷:', storage.app.options.storageBucket);
+      
+      // 테스트 참조 생성
+      const testRef = ref(storage, 'test');
+      console.log('테스트 참조 생성 성공:', testRef);
+    } catch (err) {
+      console.error('Firebase Storage 초기화 확인 중 오류:', err);
+    }
+  }, []);
+
   // 사진 업로드 처리
   const handleUpload = async (e) => {
     e.preventDefault();
-    console.log('업로드 버튼 클릭됨');
-    
-    if (!uploadForm.file) {
-      alert('파일을 선택해주세요.');
-      return;
-    }
-    
-    if (!uploadForm.title.trim()) {
-      alert('제목을 입력해주세요.');
-      return;
-    }
-    
-    if (!uploadForm.date.trim()) {
-      alert('날짜를 입력해주세요.');
-      return;
-    }
-    
-    // 날짜 형식 검증 (YYYY/MM/DD)
-    const datePattern = /^\d{4}\/\d{2}\/\d{2}$/;
-    if (!datePattern.test(uploadForm.date)) {
-      alert('날짜는 YYYY/MM/DD 형식으로 입력해주세요. (예: 2023/12/25)');
-      return;
-    }
+    console.log('업로드 폼 제출됨');
     
     try {
+      // 입력 검증
+      if (!uploadForm.file) {
+        alert('파일을 선택해주세요.');
+        return;
+      }
+      
+      if (!uploadForm.title.trim()) {
+        alert('제목을 입력해주세요.');
+        return;
+      }
+      
+      if (!uploadForm.date.trim()) {
+        alert('날짜를 입력해주세요.');
+        return;
+      }
+      
+      // 날짜 형식 검증 (YYYY/MM/DD)
+      const datePattern = /^\d{4}\/\d{2}\/\d{2}$/;
+      if (!datePattern.test(uploadForm.date)) {
+        alert('날짜는 YYYY/MM/DD 형식으로 입력해주세요. (예: 2023/12/25)');
+        return;
+      }
+      
+      // 파일 크기 검증 (10MB 제한)
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      if (uploadForm.file.size > MAX_FILE_SIZE) {
+        alert('파일 크기는 10MB 이하여야 합니다.');
+        return;
+      }
+      
+      // 파일 형식 검증
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(uploadForm.file.type)) {
+        alert('지원되는 이미지 형식은 JPEG, PNG, GIF, WEBP입니다.');
+        return;
+      }
+      
       console.log('업로드 시작', uploadForm);
       setUploadProgress(0);
       
-      // Firebase Storage에 파일 업로드
+      // 파일 이름 생성
       const fileExtension = uploadForm.file.name.split('.').pop();
       const fileName = `gallery_${Date.now()}.${fileExtension}`;
       
-      // 스토리지 참조 생성
-      console.log('스토리지 참조 생성 시작');
-      const storageRef = ref(storage, `gallery/${fileName}`);
-      console.log('스토리지 참조 생성 완료', storageRef);
-      
-      // 파일 업로드
-      console.log('파일 업로드 시작');
-      const uploadTask = uploadBytesResumable(storageRef, uploadForm.file);
-      console.log('업로드 작업 생성 완료', uploadTask);
-      
-      // 업로드 진행 상태 모니터링
-      uploadTask.on(
-        'state_changed', 
-        (snapshot) => {
-          // 진행 상태 업데이트
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log('업로드 진행률:', progress);
-          setUploadProgress(progress);
-        },
-        (error) => {
-          // 오류 처리
-          console.error('업로드 중 오류 발생:', error);
-          alert(`파일 업로드 중 오류가 발생했습니다: ${error.message}`);
-        },
-        async () => {
-          // 업로드 완료 처리
-          console.log('업로드 완료, URL 가져오기 시작');
+      try {
+        // 로컬 스토리지를 사용한 업로드 처리 (base64 인코딩)
+        const reader = new FileReader();
+        
+        reader.onloadstart = () => {
+          console.log('파일 읽기 시작');
+          setUploadProgress(10);
+        };
+        
+        reader.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const progress = (event.loaded / event.total) * 50; // 50%까지만 진행 (읽기 단계)
+            console.log('파일 읽기 진행률:', progress);
+            setUploadProgress(progress);
+          }
+        };
+        
+        reader.onerror = (error) => {
+          console.error('파일 읽기 중 오류:', error);
+          alert('파일을 읽는 중 오류가 발생했습니다.');
+          setUploadProgress(0);
+        };
+        
+        reader.onload = async (event) => {
           try {
-            // 업로드 완료 후 다운로드 URL 가져오기
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            console.log('다운로드 URL 가져오기 완료:', downloadURL);
+            // base64 인코딩된 이미지 URL
+            const imageUrl = event.target.result;
+            console.log('파일 읽기 완료');
+            setUploadProgress(70); // 70%까지 진행 (Firestore 저장 전)
             
             // Firestore에 사진 정보 저장
             const photoData = {
               title: uploadForm.title,
               date: uploadForm.date,
-              description: uploadForm.description,
-              imageUrl: downloadURL,
+              description: uploadForm.description || '',
+              imageUrl: imageUrl, // base64 인코딩된 이미지 URL
               fileName: fileName,
               uploadedAt: new Date().toISOString()
             };
-            console.log('Firestore에 저장할 데이터:', photoData);
+            
+            console.log('Firestore에 저장 시작');
+            setUploadProgress(80);
             
             // Firestore에 문서 추가
-            console.log('Firestore 문서 추가 시작');
             const docRef = await addDoc(collection(db, 'gallery'), photoData);
-            console.log('Firestore 문서 추가 완료:', docRef.id);
+            console.log('Firestore에 저장 완료');
+            setUploadProgress(100);
             
             // 상태 업데이트
             setPhotos(prevPhotos => [
@@ -153,16 +184,27 @@ export default function Gallery() {
             
             // 모달 닫기
             setIsUploadModalOpen(false);
+            setUploadProgress(0);
             alert('사진이 성공적으로 업로드되었습니다.');
           } catch (err) {
-            console.error('URL 가져오기 또는 Firestore 저장 중 오류:', err);
+            console.error('Firestore 저장 중 오류:', err);
             alert(`사진 정보 저장 중 오류가 발생했습니다: ${err.message}`);
+            setUploadProgress(0);
           }
-        }
-      );
+        };
+        
+        // 파일을 base64 인코딩된 문자열로 읽기
+        reader.readAsDataURL(uploadForm.file);
+        
+      } catch (err) {
+        console.error('파일 업로드 중 오류 발생:', err);
+        alert(`파일 업로드 중 오류가 발생했습니다: ${err.message}`);
+        setUploadProgress(0);
+      }
     } catch (err) {
       console.error('사진 업로드 중 오류 발생:', err);
       alert(`사진 업로드 중 오류가 발생했습니다: ${err.message}`);
+      setUploadProgress(0);
     }
   };
 
@@ -173,10 +215,40 @@ export default function Gallery() {
       const selectedFile = e.target.files[0];
       console.log('선택된 파일:', selectedFile.name, selectedFile.type, selectedFile.size);
       
-      setUploadForm({
-        ...uploadForm,
-        file: selectedFile
-      });
+      // 파일 크기 검증 (10MB 제한)
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      if (selectedFile.size > MAX_FILE_SIZE) {
+        alert('파일 크기는 10MB 이하여야 합니다.');
+        e.target.value = ''; // 파일 선택 초기화
+        return;
+      }
+      
+      // 파일 형식 검증
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(selectedFile.type)) {
+        alert('지원되는 이미지 형식은 JPEG, PNG, GIF, WEBP입니다.');
+        e.target.value = ''; // 파일 선택 초기화
+        return;
+      }
+      
+      // 현재 날짜로 날짜 필드 자동 설정 (아직 설정되지 않은 경우)
+      if (!uploadForm.date) {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        
+        setUploadForm(prev => ({
+          ...prev,
+          date: `${year}/${month}/${day}`,
+          file: selectedFile
+        }));
+      } else {
+        setUploadForm(prev => ({
+          ...prev,
+          file: selectedFile
+        }));
+      }
     }
   };
 
@@ -186,28 +258,84 @@ export default function Gallery() {
     
     // 날짜 형식 검증 (YYYY/MM/DD)
     if (name === 'date') {
+      // 이전 값 가져오기
+      const prevValue = uploadForm.date;
+      
+      // 백스페이스로 지우는 경우 특별 처리
+      if (prevValue.length > value.length) {
+        // 마지막 문자가 슬래시인 경우 슬래시와 그 앞 숫자까지 함께 지움
+        if (prevValue.endsWith('/') && !value.endsWith('/')) {
+          const newValue = value.slice(0, -1);
+          setUploadForm(prev => ({
+            ...prev,
+            [name]: newValue
+          }));
+          return;
+        }
+      }
+      
       // 숫자와 / 문자만 허용
       const sanitizedValue = value.replace(/[^\d/]/g, '');
       
       // 자동으로 / 추가
-      let formattedValue = sanitizedValue;
-      if (sanitizedValue.length === 4 && !sanitizedValue.includes('/')) {
-        formattedValue = sanitizedValue + '/';
-      } else if (sanitizedValue.length === 7 && sanitizedValue.split('/').length === 2) {
-        formattedValue = sanitizedValue + '/';
+      let formattedValue = '';
+      
+      // 숫자만 추출
+      const digitsOnly = sanitizedValue.replace(/\//g, '');
+      
+      // 숫자를 YYYY/MM/DD 형식으로 변환 (최대 8자리)
+      const limitedDigits = digitsOnly.slice(0, 8);
+      
+      if (limitedDigits.length > 0) {
+        // 년도 부분 (4자리)
+        formattedValue = limitedDigits.slice(0, Math.min(4, limitedDigits.length));
+        
+        // 월 부분 (2자리)
+        if (limitedDigits.length > 4) {
+          let month = limitedDigits.slice(4, Math.min(6, limitedDigits.length));
+          // 월이 12를 넘지 않도록 제한
+          if (parseInt(month) > 12) {
+            month = '12';
+          } else if (parseInt(month) === 0 && month.length === 2) {
+            month = '01';
+          }
+          
+          formattedValue += '/' + month;
+          
+          // 월이 2자리가 되면 자동으로 슬래시 추가
+          if (limitedDigits.length === 6 && !sanitizedValue.endsWith('/') && 
+              (prevValue.length < value.length || !prevValue.includes('/'))) {
+            formattedValue += '/';
+          }
+          
+          // 일 부분 (2자리)
+          if (limitedDigits.length > 6) {
+            let day = limitedDigits.slice(6, 8);
+            // 일이 31을 넘지 않도록 제한
+            if (parseInt(day) > 31) {
+              day = '31';
+            } else if (parseInt(day) === 0 && day.length === 2) {
+              day = '01';
+            }
+            formattedValue += (formattedValue.endsWith('/') ? '' : '/') + day;
+          }
+        } else if (limitedDigits.length === 4 && !sanitizedValue.endsWith('/')) {
+          // 년도 4자리 입력 후 자동으로 슬래시 추가
+          formattedValue += '/';
+        }
       }
       
-      setUploadForm({
-        ...uploadForm,
+      setUploadForm(prev => ({
+        ...prev,
         [name]: formattedValue
-      });
+      }));
       return;
     }
     
-    setUploadForm({
-      ...uploadForm,
+    setUploadForm(prev => ({
+      ...prev,
       [name]: value
-    });
+    }));
   };
 
   // 사진 보기
@@ -224,10 +352,6 @@ export default function Gallery() {
       // Firestore에서 문서 삭제
       await deleteDoc(doc(db, 'gallery', photo.id));
       
-      // Storage에서 파일 삭제
-      const storageRef = ref(storage, `gallery/${photo.fileName}`);
-      await deleteObject(storageRef);
-      
       // 상태 업데이트
       setPhotos(prevPhotos => prevPhotos.filter(p => p.id !== photo.id));
       
@@ -237,7 +361,7 @@ export default function Gallery() {
       
       alert('사진이 성공적으로 삭제되었습니다.');
     } catch (err) {
-      console.error('사진 삭제 중 오류 발생:', err);
+      console.error('Firestore 문서 삭제 중 오류:', err);
       alert('사진 삭제 중 오류가 발생했습니다.');
     }
   };
@@ -263,214 +387,212 @@ export default function Gallery() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Head>
-        <title>Westerners - 갤러리</title>
-        <meta name="description" content="Westerners 모임의 정기 모임 사진 갤러리" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    <ProtectedRoute requiredRole="member">
+      <div className="flex flex-col min-h-screen">
+        <Head>
+          <title>Westerners - 갤러리</title>
+          <meta name="description" content="Westerners 모임 갤러리" />
+          <link rel="icon" href="/favicon.ico" />
+        </Head>
 
-      <Header />
+        <Header />
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 bg-gradient-to-r from-blue-900 to-blue-800 text-white">
-        <div className="container mx-auto px-6 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">정기 모임 갤러리</h1>
-          <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-            서쪽모임의 소중한 추억을 함께 공유합니다
-          </p>
-          <div className="mt-8">
-            <button 
-              onClick={() => setIsUploadModalOpen(true)}
-              className="bg-white text-blue-800 hover:bg-blue-100 font-semibold py-2 px-6 rounded-full transition-all duration-300 flex items-center mx-auto"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-              </svg>
-              사진 업로드
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Gallery Content */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-6">
-          {isLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-          ) : error ? (
-            <div className="text-center py-12 text-red-500">{error}</div>
-          ) : photos.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
-              <p className="text-xl font-medium">아직 업로드된 사진이 없습니다</p>
-              <p className="mt-2">첫 번째 사진을 업로드해 보세요!</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {photos.map((photo) => (
-                <div 
-                  key={photo.id} 
-                  className="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
-                  onClick={() => handleViewPhoto(photo)}
-                >
-                  <div className="relative h-48">
-                    <Image 
-                      src={photo.imageUrl} 
-                      alt={photo.title}
-                      layout="fill"
-                      objectFit="cover"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-bold text-lg text-gray-800 truncate">{photo.title}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{formatDate(photo.date)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* 사진 업로드 모달 */}
-      {isUploadModalOpen && (
-        <Modal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)}>
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">사진 업로드</h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">제목</label>
-                <input
-                  type="text"
-                  name="title"
-                  value={uploadForm.title}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="사진 제목을 입력하세요"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">날짜</label>
-                <input
-                  type="text"
-                  name="date"
-                  value={uploadForm.date}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="YYYY/MM/DD 형식으로 입력하세요"
-                  required
-                />
-                <p className="mt-1 text-xs text-gray-500">예: 2023/12/25</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">설명</label>
-                <textarea
-                  name="description"
-                  value={uploadForm.description}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-                  placeholder="사진에 대한 설명을 입력하세요"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">사진 파일</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                {uploadForm.file && (
-                  <p className="mt-1 text-sm text-gray-500">
-                    선택된 파일: {uploadForm.file.name}
-                  </p>
-                )}
-              </div>
-              
-              {uploadProgress > 0 && uploadProgress < 100 && (
-                <div className="mt-4">
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      className="bg-blue-600 h-2.5 rounded-full" 
-                      style={{ width: `${uploadProgress}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1 text-center">{Math.round(uploadProgress)}% 업로드 중...</p>
-                </div>
-              )}
-              
-              <div className="mt-8 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setIsUploadModalOpen(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-md transition-colors"
-                >
-                  취소
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    console.log('업로드 버튼 직접 클릭됨');
-                    handleUpload(e);
-                  }}
-                  className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
-                  disabled={uploadProgress > 0 && uploadProgress < 100}
-                >
-                  업로드
-                </button>
-              </div>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {/* 사진 보기 모달 */}
-      {isViewModalOpen && selectedPhoto && (
-        <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)}>
-          <div className="p-6">
-            <div className="relative w-full h-64 sm:h-96 mb-4">
-              <Image 
-                src={selectedPhoto.imageUrl} 
-                alt={selectedPhoto.title}
-                layout="fill"
-                objectFit="contain"
-              />
-            </div>
-            
-            <h2 className="text-2xl font-bold mb-2 text-gray-800">{selectedPhoto.title}</h2>
-            <p className="text-sm text-gray-500 mb-4">{formatDate(selectedPhoto.date)}</p>
-            
-            {selectedPhoto.description && (
-              <p className="text-gray-700 mb-6">{selectedPhoto.description}</p>
-            )}
-            
-            <div className="flex justify-end">
-              <button
-                onClick={() => handleDeletePhoto(selectedPhoto)}
-                className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors flex items-center"
+        {/* Hero Section */}
+        <section className="pt-32 pb-20 bg-gradient-to-r from-blue-900 to-blue-800 text-white">
+          <div className="container mx-auto px-6 text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">정기 모임 갤러리</h1>
+            <p className="text-xl text-blue-100 max-w-3xl mx-auto">
+              서쪽모임의 소중한 추억을 함께 공유합니다
+            </p>
+            <div className="mt-8">
+              <button 
+                onClick={() => setIsUploadModalOpen(true)}
+                className="bg-white text-blue-800 hover:bg-blue-100 font-semibold py-2 px-6 rounded-full transition-all duration-300 flex items-center mx-auto"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                 </svg>
-                삭제하기
+                사진 업로드
               </button>
             </div>
           </div>
-        </Modal>
-      )}
+        </section>
 
-      <Footer />
-    </div>
+        {/* Gallery Content */}
+        <section className="py-16 bg-gray-50">
+          <div className="container mx-auto px-6">
+            {isLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12 text-red-500">{error}</div>
+            ) : photos.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <p className="text-xl font-medium">아직 업로드된 사진이 없습니다</p>
+                <p className="mt-2">첫 번째 사진을 업로드해 보세요!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {photos.map((photo) => (
+                  <div 
+                    key={photo.id} 
+                    className="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
+                    onClick={() => handleViewPhoto(photo)}
+                  >
+                    <div className="relative h-48">
+                      <Image 
+                        src={photo.imageUrl} 
+                        alt={photo.title}
+                        layout="fill"
+                        objectFit="cover"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-bold text-lg text-gray-800 truncate">{photo.title}</h3>
+                      <p className="text-sm text-gray-500 mt-1">{formatDate(photo.date)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* 사진 업로드 모달 */}
+        {isUploadModalOpen && (
+          <Modal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)}>
+            <div className="p-6">
+              <h2 className="text-2xl font-bold mb-6 text-gray-800">사진 업로드</h2>
+              
+              <form onSubmit={handleUpload} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">제목</label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={uploadForm.title}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="사진 제목을 입력하세요"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">날짜</label>
+                  <input
+                    type="text"
+                    name="date"
+                    value={uploadForm.date}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="YYYY/MM/DD 형식으로 입력하세요"
+                    required
+                  />
+                  <p className="mt-1 text-xs text-gray-500">예: 2023/12/25</p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">설명</label>
+                  <textarea
+                    name="description"
+                    value={uploadForm.description}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                    placeholder="사진에 대한 설명을 입력하세요"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">사진 파일</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                  {uploadForm.file && (
+                    <p className="mt-1 text-sm text-gray-500">
+                      선택된 파일: {uploadForm.file.name}
+                    </p>
+                  )}
+                </div>
+                
+                {uploadProgress > 0 && uploadProgress < 100 && (
+                  <div className="mt-4">
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div 
+                        className="bg-blue-600 h-2.5 rounded-full" 
+                        style={{ width: `${uploadProgress}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1 text-center">{Math.round(uploadProgress)}% 업로드 중...</p>
+                  </div>
+                )}
+                
+                <div className="mt-8 flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsUploadModalOpen(false)}
+                    className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-md transition-colors"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+                    disabled={uploadProgress > 0 && uploadProgress < 100}
+                  >
+                    업로드
+                  </button>
+                </div>
+              </form>
+            </div>
+          </Modal>
+        )}
+
+        {/* 사진 보기 모달 */}
+        {isViewModalOpen && selectedPhoto && (
+          <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)}>
+            <div className="p-6">
+              <div className="relative w-full h-64 sm:h-96 mb-4">
+                <Image 
+                  src={selectedPhoto.imageUrl} 
+                  alt={selectedPhoto.title}
+                  layout="fill"
+                  objectFit="contain"
+                />
+              </div>
+              
+              <h2 className="text-2xl font-bold mb-2 text-gray-800">{selectedPhoto.title}</h2>
+              <p className="text-sm text-gray-500 mb-4">{formatDate(selectedPhoto.date)}</p>
+              
+              {selectedPhoto.description && (
+                <p className="text-gray-700 mb-6">{selectedPhoto.description}</p>
+              )}
+              
+              <div className="flex justify-end">
+                <button
+                  onClick={() => handleDeletePhoto(selectedPhoto)}
+                  className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors flex items-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                  삭제하기
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        <Footer />
+      </div>
+    </ProtectedRoute>
   );
 } 
