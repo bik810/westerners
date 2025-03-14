@@ -11,13 +11,13 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 
 // 테스트 계정 정보
 const testAccounts = [
-  { id: 'admin', password: 'admin123', role: '관리자' },
-  { id: 'treasurer', password: 'treasurer123', role: '총무' },
-  { id: 'member', password: 'member123', role: '일반 회원' }
+  { email: 'admin@westerners.com', password: 'admin123', role: '관리자' },
+  { email: 'treasurer@westerners.com', password: 'treasurer123', role: '총무' },
+  { email: 'member@westerners.com', password: 'member123', role: '일반 회원' }
 ];
 
 export default function Login() {
-  const [userId, setUserId] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -39,17 +39,14 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!userId || !password) {
-      setError('아이디와 비밀번호를 모두 입력해주세요.');
+    if (!email || !password) {
+      setError('이메일과 비밀번호를 모두 입력해주세요.');
       return;
     }
     
     try {
       setError('');
       setLoading(true);
-      
-      // 사용자 ID를 이메일로 변환 (개발 환경에서는 그대로 사용)
-      const email = isDevEnv ? userId : `${userId}@westerners.com`;
       
       console.log(`로그인 시도: ${email} (${isDevEnv ? '개발 환경' : '프로덕션 환경'})`);
       await loginUser(email, password);
@@ -62,7 +59,7 @@ export default function Login() {
         // 개발 환경에서는 더 자세한 오류 메시지 표시
         setError(`로그인 오류: ${error.message}`);
       } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        setError('아이디 또는 비밀번호가 올바르지 않습니다.');
+        setError('이메일 또는 비밀번호가 올바르지 않습니다.');
       } else if (error.code === 'auth/too-many-requests') {
         setError('로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.');
       } else {
@@ -75,7 +72,7 @@ export default function Login() {
 
   // 테스트 계정으로 자동 입력
   const fillTestAccount = (account) => {
-    setUserId(account.id);
+    setEmail(account.email);
     setPassword(account.password);
   };
 
@@ -107,9 +104,9 @@ export default function Login() {
                 <p className="font-bold mb-2">개발 환경 테스트 계정</p>
                 <div className="space-y-2">
                   {testAccounts.map((account) => (
-                    <div key={account.id} className="flex justify-between items-center p-2 bg-white rounded border border-yellow-300">
+                    <div key={account.email} className="flex justify-between items-center p-2 bg-white rounded border border-yellow-300">
                       <div>
-                        <span className="font-medium">{account.role}:</span> {account.id} / {account.password}
+                        <span className="font-medium">{account.role}:</span> {account.email} / {account.password}
                       </div>
                       <button
                         type="button"
@@ -129,17 +126,17 @@ export default function Login() {
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="rounded-md shadow-sm -space-y-px">
               <div>
-                <label htmlFor="userId" className="sr-only">아이디</label>
+                <label htmlFor="email" className="sr-only">이메일</label>
                 <input
-                  id="userId"
-                  name="userId"
-                  type="text"
-                  autoComplete="username"
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
                   required
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="아이디"
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
+                  placeholder="이메일"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div>
