@@ -86,14 +86,9 @@ export default function Home() {
               </>
             ) : (
               // 로그인하지 않은 사용자에게 표시할 버튼
-              <>
-                <Link href="/rules" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
-                  회칙 보기
-                </Link>
-                <Link href="/login" className="bg-white text-blue-700 hover:bg-blue-50 font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
-                  로그인
-                </Link>
-              </>
+              <Link href="/login" className="bg-white text-blue-700 hover:bg-blue-50 font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
+                로그인
+              </Link>
             )}
           </div>
         </div>
