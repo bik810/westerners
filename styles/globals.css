@@ -24,3 +24,33 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* 플레이스홀더 텍스트 색상 진하게 설정 */
+::placeholder {
+  color: #666666 !important;
+  opacity: 1 !important;
+}
+
+/* WebKit 브라우저용 */
+::-webkit-input-placeholder {
+  color: #666666 !important;
+  opacity: 1 !important;
+}
+
+/* Firefox 4-18용 */
+:-moz-placeholder {
+  color: #666666 !important;
+  opacity: 1 !important;
+}
+
+/* Firefox 19+용 */
+::-moz-placeholder {
+  color: #666666 !important;
+  opacity: 1 !important;
+}
+
+/* IE 10+용 */
+:-ms-input-placeholder {
+  color: #666666 !important;
+  opacity: 1 !important;
+}

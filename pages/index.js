@@ -120,8 +120,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">모임 소개</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Westerners는 싱가포르에서 함께 고생하며 일하는 사람들이 모여 만든 모임입니다.
-                  우리는 정기적인 모임을 통해 돈독한 우정을 나누고 서로에게 힘이 되어주는 것을 목표로 합니다.
+                  Westerners는 싱가포르에서 근무하는 한국인들의 친목 모임입니다. 회원들 각자 처한 상황에서의 외로움과 어려움을 함께 나누고 서로에게 힘이 되어주는 따뜻한 모임입니다.
                 </p>
               </div>
             </div>
@@ -136,8 +135,9 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">활동 내용</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  월간 정기 모임, 특별 이벤트, 친목 활동 등을 통해 회원들 간의 우정을 돈독히 합니다.
-                  싱가포르에서의 생활 정보를 공유하고 서로에게 도움이 되는 시간을 가집니다.
+                  정기적인 모임을 통해 서로의 일상을 나누고 친목을 다집니다.
+                  싱가포르 생활 정보 공유, 함께하는 식사 모임, 특별 행사 등 다양한 활동으로 
+                  타국에서도 가족 같은 따뜻함을 느낄 수 있는 시간을 만들어갑니다.
                 </p>
               </div>
             </div>
@@ -147,13 +147,14 @@ export default function Home() {
               <div className="p-8">
                 <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-6 mx-auto">
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">가입 안내</h3>
+                <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">우리의 가치</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  싱가포르에서 일하고 계신 분들 중 우리 모임에 관심이 있으신 분은 누구나 가입할 수 있습니다.
-                  가입을 원하시면 모임 관리자에게 연락해 주세요. 새로운 회원을 언제나 환영합니다.
+                  서로를 존중하고 배려하는 마음으로 진정한 우정을 나눕니다.
+                  국적과 나이를 초월한 다양한 경험과 지혜를 공유하며,
+                  싱가포르에서의 삶이 더욱 풍요롭고 의미 있게 만들어 갑니다.
                 </p>
               </div>
             </div>
@@ -161,50 +162,52 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 최근 갤러리 섹션 */}
-      <section className="py-20 bg-blue-600 text-white">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">최근 갤러리</h2>
-            <div className="w-24 h-1 bg-white mx-auto"></div>
-          </div>
-          
-          {isLoading ? (
-            <div className="flex justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+      {/* 최근 갤러리 섹션 - 로그인한 사용자만 */}
+      {currentUser && (
+        <section className="py-20 bg-blue-600 text-white">
+          <div className="container mx-auto px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">최근 갤러리</h2>
+              <div className="w-24 h-1 bg-white mx-auto"></div>
             </div>
-          ) : recentPhotos.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {recentPhotos.map((photo) => (
-                <Link href={currentUser ? "/gallery" : "/login"} key={photo.id} className="block">
-                  <div className="bg-white rounded-lg overflow-hidden shadow-lg transform transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
-                    <div className="relative h-48 w-full">
-                      <Image 
-                        src={photo.imageUrl} 
-                        alt={photo.title} 
-                        fill
-                        className="object-cover"
-                      />
+            
+            {isLoading ? (
+              <div className="flex justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+              </div>
+            ) : recentPhotos.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {recentPhotos.map((photo) => (
+                  <Link href="/gallery" key={photo.id} className="block">
+                    <div className="bg-white rounded-lg overflow-hidden shadow-lg transform transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
+                      <div className="relative h-48 w-full">
+                        <Image 
+                          src={photo.imageUrl} 
+                          alt={photo.title} 
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="p-4 bg-white text-gray-800">
+                        <h3 className="font-bold text-lg mb-1 truncate">{photo.title}</h3>
+                        <p className="text-sm text-gray-600">{photo.date}</p>
+                      </div>
                     </div>
-                    <div className="p-4 bg-white text-gray-800">
-                      <h3 className="font-bold text-lg mb-1 truncate">{photo.title}</h3>
-                      <p className="text-sm text-gray-600">{photo.date}</p>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-xl">아직 갤러리에 사진이 없습니다.</p>
+            )}
+            
+            <div className="text-center mt-10">
+              <Link href="/gallery" className="bg-white text-blue-600 hover:bg-blue-50 font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg inline-block">
+                갤러리 더 보기
+              </Link>
             </div>
-          ) : (
-            <p className="text-center text-xl">아직 갤러리에 사진이 없습니다.</p>
-          )}
-          
-          <div className="text-center mt-10">
-            <Link href={currentUser ? "/gallery" : "/login"} className="bg-white text-blue-600 hover:bg-blue-50 font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg inline-block">
-              {currentUser ? "갤러리 더 보기" : "로그인하여 갤러리 보기"}
-            </Link>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <Footer />
     </div>

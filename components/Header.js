@@ -49,17 +49,31 @@ export default function Header() {
           <span className="text-blue-600">W</span>esterners
         </Link>
         
-        {/* Desktop Navigation */}
+        {/* 데스크톱 메뉴 */}
         <div className="hidden md:flex items-center space-x-8">
+          {/* 홈 메뉴 */}
           <Link 
-            href="/rules" 
+            href="/" 
             className={`font-medium hover:text-blue-600 transition-colors ${
-              isActive('/rules') ? 'text-blue-600' : ''
+              isActive('/') ? 'text-blue-600' : ''
             }`}
           >
-            회칙
+            홈
           </Link>
           
+          {/* 회칙 메뉴 - 로그인한 사용자만 */}
+          {currentUser && (
+            <Link 
+              href="/rules" 
+              className={`font-medium hover:text-blue-600 transition-colors ${
+                isActive('/rules') ? 'text-blue-600' : ''
+              }`}
+            >
+              회칙
+            </Link>
+          )}
+          
+          {/* 갤러리 메뉴 - 로그인한 사용자만 */}
           {currentUser && (
             <Link 
               href="/gallery" 
@@ -71,6 +85,7 @@ export default function Header() {
             </Link>
           )}
           
+          {/* 회비 관리 메뉴 - 총무/관리자만 */}
           {currentUser && userProfile && (userProfile.role === 'treasurer' || userProfile.role === 'admin') && (
             <Link 
               href="/fees" 
@@ -82,6 +97,7 @@ export default function Header() {
             </Link>
           )}
           
+          {/* 회원 관리 메뉴 - 관리자만 */}
           {currentUser && userProfile && userProfile.role === 'admin' && (
             <Link 
               href="/admin/members" 
@@ -93,8 +109,10 @@ export default function Header() {
             </Link>
           )}
           
+          {/* 로그인/로그아웃 및 비밀번호 변경 */}
           {currentUser ? (
             <div className="flex items-center space-x-4">
+              {/* 비밀번호 변경 아이콘 */}
               <Link 
                 href="/change-password" 
                 className="text-current hover:text-blue-600 transition-colors"
@@ -104,6 +122,7 @@ export default function Header() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                 </svg>
               </Link>
+              {/* 로그아웃 버튼 */}
               <button 
                 onClick={handleLogout}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
@@ -121,7 +140,7 @@ export default function Header() {
           )}
         </div>
         
-        {/* Mobile Menu Button */}
+        {/* 모바일 메뉴 버튼 */}
         <div className="md:hidden">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -140,19 +159,34 @@ export default function Header() {
         </div>
       </div>
       
-      {/* Mobile Navigation */}
+      {/* 모바일 메뉴 */}
       <div className={`md:hidden ${mobileMenuOpen ? 'block' : 'hidden'}`}>
         <div className="px-6 py-4 bg-white border-t border-gray-200">
+          {/* 홈 메뉴 */}
           <Link 
-            href="/rules" 
+            href="/" 
             className={`block py-2 font-medium hover:text-blue-600 transition-colors ${
-              isActive('/rules') ? 'text-blue-600' : 'text-gray-800'
+              isActive('/') ? 'text-blue-600' : 'text-gray-800'
             }`}
             onClick={() => setMobileMenuOpen(false)}
           >
-            회칙
+            홈
           </Link>
           
+          {/* 회칙 메뉴 - 로그인한 사용자만 */}
+          {currentUser && (
+            <Link 
+              href="/rules" 
+              className={`block py-2 font-medium hover:text-blue-600 transition-colors ${
+                isActive('/rules') ? 'text-blue-600' : 'text-gray-800'
+              }`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              회칙
+            </Link>
+          )}
+          
+          {/* 갤러리 메뉴 - 로그인한 사용자만 */}
           {currentUser && (
             <Link 
               href="/gallery" 
@@ -165,6 +199,7 @@ export default function Header() {
             </Link>
           )}
           
+          {/* 회비 관리 메뉴 - 총무/관리자만 */}
           {currentUser && userProfile && (userProfile.role === 'treasurer' || userProfile.role === 'admin') && (
             <Link 
               href="/fees" 
@@ -177,6 +212,7 @@ export default function Header() {
             </Link>
           )}
           
+          {/* 회원 관리 메뉴 - 관리자만 */}
           {currentUser && userProfile && userProfile.role === 'admin' && (
             <Link 
               href="/admin/members" 
@@ -189,6 +225,7 @@ export default function Header() {
             </Link>
           )}
           
+          {/* 로그인/로그아웃 및 비밀번호 변경 */}
           {currentUser ? (
             <div className="py-2 flex flex-col space-y-2">
               <Link 
