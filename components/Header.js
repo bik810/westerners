@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useAuth } from '../lib/authContext';
 import { logoutUser } from '../lib/firestoreService';
@@ -40,232 +41,195 @@ export default function Header() {
     <header 
       className={`fixed w-full z-50 transition-all duration-300 ${
         scrolled 
-          ? 'bg-white text-gray-800 shadow-lg py-3' 
-          : 'bg-transparent text-white py-5'
+          ? 'bg-[#0c0b4a] text-white shadow-lg py-2' 
+          : 'bg-[#0c0b4a] text-white py-3'
       }`}
     >
       <div className="container mx-auto px-6 flex justify-between items-center">
-        <Link href="/" className="text-2xl font-bold tracking-tight">
-          <span className="text-blue-600">W</span>esterners
+        <Link href="/" className="flex items-center">
+          <div className="relative h-12 w-36">
+            <Image 
+              src="/images/westerners-logo.png" 
+              alt="Westerners Logo" 
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
         </Link>
         
         {/* Desktop Navigation */}
-        <nav className="hidden md:block">
-          <ul className="flex space-x-8">
-            <li>
+        <div className="hidden md:flex items-center space-x-8">
+          <Link 
+            href="/rules" 
+            className={`font-medium hover:text-blue-300 transition-colors ${
+              isActive('/rules') ? 'text-blue-300' : ''
+            }`}
+          >
+            회칙
+          </Link>
+          
+          {currentUser && (
+            <Link 
+              href="/gallery" 
+              className={`font-medium hover:text-blue-300 transition-colors ${
+                isActive('/gallery') ? 'text-blue-300' : ''
+              }`}
+            >
+              갤러리
+            </Link>
+          )}
+          
+          {currentUser && userProfile && (userProfile.role === 'treasurer' || userProfile.role === 'admin') && (
+            <Link 
+              href="/fees" 
+              className={`font-medium hover:text-blue-300 transition-colors ${
+                isActive('/fees') ? 'text-blue-300' : ''
+              }`}
+            >
+              회비 관리
+            </Link>
+          )}
+          
+          {currentUser && userProfile && userProfile.role === 'admin' && (
+            <Link 
+              href="/admin/members" 
+              className={`font-medium hover:text-blue-300 transition-colors ${
+                isActive('/admin/members') ? 'text-blue-300' : ''
+              }`}
+            >
+              회원 관리
+            </Link>
+          )}
+          
+          {currentUser ? (
+            <div className="flex items-center space-x-4">
               <Link 
-                href="/" 
-                className={`transition-all duration-300 hover:text-blue-600 ${
-                  isActive('/') 
-                    ? 'font-semibold text-blue-600' 
-                    : 'font-medium'
-                }`}
+                href="/change-password" 
+                className="text-white hover:text-blue-300 transition-colors"
+                title="비밀번호 변경"
               >
-                홈
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
               </Link>
-            </li>
-            <li>
-              <Link 
-                href="/rules" 
-                className={`transition-all duration-300 hover:text-blue-600 ${
-                  isActive('/rules') 
-                    ? 'font-semibold text-blue-600' 
-                    : 'font-medium'
-                }`}
+              <button 
+                onClick={handleLogout}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
               >
-                회칙
-              </Link>
-            </li>
-            <li>
-              <Link 
-                href="/fees" 
-                className={`transition-all duration-300 hover:text-blue-600 ${
-                  isActive('/fees') 
-                    ? 'font-semibold text-blue-600' 
-                    : 'font-medium'
-                }`}
-              >
-                회비 관리
-              </Link>
-            </li>
-            <li>
-              <Link 
-                href="/gallery" 
-                className={`transition-all duration-300 hover:text-blue-600 ${
-                  isActive('/gallery') 
-                    ? 'font-semibold text-blue-600' 
-                    : 'font-medium'
-                }`}
-              >
-                갤러리
-              </Link>
-            </li>
-            {hasPermission && hasPermission('admin') && (
-              <li>
-                <Link 
-                  href="/admin/members" 
-                  className={`transition-all duration-300 hover:text-blue-600 ${
-                    isActive('/admin/members') 
-                      ? 'font-semibold text-blue-600' 
-                      : 'font-medium'
-                  }`}
-                >
-                  회원 관리
-                </Link>
-              </li>
-            )}
-            {currentUser ? (
-              <li className="flex items-center space-x-4">
-                <button
-                  onClick={handleLogout}
-                  className="transition-all duration-300 hover:text-blue-600 font-medium"
-                >
-                  로그아웃
-                </button>
-                <Link 
-                  href="/change-password"
-                  title="비밀번호 변경"
-                  className="transition-all duration-300 hover:text-blue-600"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                  </svg>
-                </Link>
-              </li>
-            ) : (
-              <li>
-                <Link 
-                  href="/login" 
-                  className={`transition-all duration-300 hover:text-blue-600 ${
-                    isActive('/login') 
-                      ? 'font-semibold text-blue-600' 
-                      : 'font-medium'
-                  }`}
-                >
-                  로그인
-                </Link>
-              </li>
-            )}
-          </ul>
-        </nav>
-
+                로그아웃
+              </button>
+            </div>
+          ) : (
+            <Link 
+              href="/login" 
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+            >
+              로그인
+            </Link>
+          )}
+        </div>
+        
         {/* Mobile Menu Button */}
-        <button 
-          className="md:hidden text-2xl focus:outline-none"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? '✕' : '☰'}
-        </button>
-      </div>
-
-      {/* Mobile Navigation */}
-      <div 
-        className={`md:hidden absolute w-full bg-white shadow-lg transition-all duration-300 ease-in-out ${
-          mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
-        }`}
-      >
-        <nav className="container mx-auto px-6 py-4">
-          <ul className="space-y-4">
-            <li>
-              <Link 
-                href="/" 
-                className={`block py-2 text-gray-800 hover:text-blue-600 ${
-                  isActive('/') ? 'font-semibold text-blue-600' : ''
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                홈
-              </Link>
-            </li>
-            <li>
-              <Link 
-                href="/rules" 
-                className={`block py-2 text-gray-800 hover:text-blue-600 ${
-                  isActive('/rules') ? 'font-semibold text-blue-600' : ''
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                회칙
-              </Link>
-            </li>
-            <li>
-              <Link 
-                href="/fees" 
-                className={`block py-2 text-gray-800 hover:text-blue-600 ${
-                  isActive('/fees') ? 'font-semibold text-blue-600' : ''
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                회비 관리
-              </Link>
-            </li>
-            <li>
-              <Link 
-                href="/gallery" 
-                className={`block py-2 text-gray-800 hover:text-blue-600 ${
-                  isActive('/gallery') ? 'font-semibold text-blue-600' : ''
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                갤러리
-              </Link>
-            </li>
-            {hasPermission && hasPermission('admin') && (
-              <li>
-                <Link 
-                  href="/admin/members" 
-                  className={`block py-2 text-gray-800 hover:text-blue-600 ${
-                    isActive('/admin/members') ? 'font-semibold text-blue-600' : ''
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  회원 관리
-                </Link>
-              </li>
-            )}
-            {currentUser ? (
-              <>
-                <li>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="block py-2 text-gray-800 hover:text-blue-600"
-                  >
-                    로그아웃
-                  </button>
-                </li>
-                <li>
-                  <Link 
-                    href="/change-password"
-                    className={`flex items-center py-2 text-gray-800 hover:text-blue-600 ${
-                      isActive('/change-password') ? 'font-semibold text-blue-600' : ''
-                    }`}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                    </svg>
-                    비밀번호 변경
-                  </Link>
-                </li>
-              </>
+        <div className="md:hidden">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="text-white focus:outline-none"
+          >
+            {mobileMenuOpen ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
             ) : (
-              <li>
-                <Link 
-                  href="/login" 
-                  className={`block py-2 text-gray-800 hover:text-blue-600 ${
-                    isActive('/login') ? 'font-semibold text-blue-600' : ''
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  로그인
-                </Link>
-              </li>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
             )}
-          </ul>
-        </nav>
+          </button>
+        </div>
+      </div>
+      
+      {/* Mobile Navigation */}
+      <div className={`md:hidden ${mobileMenuOpen ? 'block' : 'hidden'}`}>
+        <div className="px-6 py-4 bg-[#0c0b4a] border-t border-blue-900">
+          <Link 
+            href="/rules" 
+            className={`block py-2 font-medium hover:text-blue-300 transition-colors ${
+              isActive('/rules') ? 'text-blue-300' : ''
+            }`}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            회칙
+          </Link>
+          
+          {currentUser && (
+            <Link 
+              href="/gallery" 
+              className={`block py-2 font-medium hover:text-blue-300 transition-colors ${
+                isActive('/gallery') ? 'text-blue-300' : ''
+              }`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              갤러리
+            </Link>
+          )}
+          
+          {currentUser && userProfile && (userProfile.role === 'treasurer' || userProfile.role === 'admin') && (
+            <Link 
+              href="/fees" 
+              className={`block py-2 font-medium hover:text-blue-300 transition-colors ${
+                isActive('/fees') ? 'text-blue-300' : ''
+              }`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              회비 관리
+            </Link>
+          )}
+          
+          {currentUser && userProfile && userProfile.role === 'admin' && (
+            <Link 
+              href="/admin/members" 
+              className={`block py-2 font-medium hover:text-blue-300 transition-colors ${
+                isActive('/admin/members') ? 'text-blue-300' : ''
+              }`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              회원 관리
+            </Link>
+          )}
+          
+          {currentUser ? (
+            <div className="py-2 flex flex-col space-y-2">
+              <Link 
+                href="/change-password" 
+                className="flex items-center text-white hover:text-blue-300 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+                비밀번호 변경
+              </Link>
+              <button 
+                onClick={() => {
+                  handleLogout();
+                  setMobileMenuOpen(false);
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+              >
+                로그아웃
+              </button>
+            </div>
+          ) : (
+            <Link 
+              href="/login" 
+              className="block py-2 bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-md transition-colors mt-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              로그인
+            </Link>
+          )}
+        </div>
       </div>
     </header>
   );
