@@ -123,92 +123,83 @@ export default function Gallery() {
       const fileName = `gallery_${Date.now()}.${fileExtension}`;
       
       try {
-        // 로컬 스토리지를 사용한 업로드 처리 (base64 인코딩)
-        const reader = new FileReader();
+        // Firebase Storage에 이미지 업로드
+        const storageRef = ref(storage, `gallery/${fileName}`);
+        const uploadTask = uploadBytesResumable(storageRef, uploadForm.file);
         
-        reader.onloadstart = () => {
-          console.log('파일 읽기 시작');
-          setUploadProgress(10);
-        };
-        
-        reader.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const progress = (event.loaded / event.total) * 50; // 50%까지만 진행 (읽기 단계)
-            console.log('파일 읽기 진행률:', progress);
+        // 업로드 진행 상태 모니터링
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 80;
+            console.log('업로드 진행률:', progress);
             setUploadProgress(progress);
-          }
-        };
-        
-        reader.onerror = (error) => {
-          console.error('파일 읽기 중 오류:', error);
-          alert('파일을 읽는 중 오류가 발생했습니다.');
-          setUploadProgress(0);
-        };
-        
-        reader.onload = async (event) => {
-          try {
-            // base64 인코딩된 이미지 URL
-            const imageUrl = event.target.result;
-            console.log('파일 읽기 완료');
-            setUploadProgress(70); // 70%까지 진행 (Firestore 저장 전)
-            
-            // Firestore에 사진 정보 저장
-            const photoData = {
-              title: uploadForm.title,
-              date: uploadForm.date,
-              description: uploadForm.description || '',
-              imageUrl: imageUrl, // base64 인코딩된 이미지 URL
-              fileName: fileName,
-              uploadedAt: new Date().toISOString()
-            };
-            
-            console.log('Firestore에 저장 시작');
-            setUploadProgress(80);
-            
-            // Firestore에 문서 추가
-            const docRef = await addDoc(collection(db, 'gallery'), photoData);
-            console.log('Firestore에 저장 완료');
-            setUploadProgress(100);
-            
-            // 상태 업데이트
-            setPhotos(prevPhotos => [
-              {
-                id: docRef.id,
-                ...photoData
-              },
-              ...prevPhotos
-            ]);
-            
-            // 폼 초기화
-            setUploadForm({
-              title: '',
-              date: '',
-              description: '',
-              file: null
-            });
-            
-            // 모달 닫기
-            setIsUploadModalOpen(false);
+          },
+          (error) => {
+            console.error('Storage 업로드 중 오류:', error);
+            alert(`이미지 업로드 중 오류가 발생했습니다: ${error.message}`);
             setUploadProgress(0);
-            alert('사진이 성공적으로 업로드되었습니다.');
-          } catch (err) {
-            console.error('Firestore 저장 중 오류:', err);
-            alert(`사진 정보 저장 중 오류가 발생했습니다: ${err.message}`);
-            setUploadProgress(0);
+          },
+          async () => {
+            // 업로드 완료 후 다운로드 URL 가져오기
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              console.log('이미지 URL:', downloadURL);
+              setUploadProgress(90);
+              
+              // Firestore에 사진 정보 저장
+              const photoData = {
+                title: uploadForm.title,
+                date: uploadForm.date,
+                description: uploadForm.description || '',
+                imageUrl: downloadURL, // Storage에서 가져온 URL
+                fileName: fileName,
+                uploadedAt: new Date().toISOString()
+              };
+              
+              console.log('Firestore에 저장 시작');
+              
+              // Firestore에 문서 추가
+              const docRef = await addDoc(collection(db, 'gallery'), photoData);
+              console.log('Firestore에 저장 완료');
+              setUploadProgress(100);
+              
+              // 상태 업데이트
+              setPhotos(prevPhotos => [
+                {
+                  id: docRef.id,
+                  ...photoData
+                },
+                ...prevPhotos
+              ]);
+              
+              // 폼 초기화
+              setUploadForm({
+                title: '',
+                date: '',
+                description: '',
+                file: null
+              });
+              
+              // 모달 닫기
+              setIsUploadModalOpen(false);
+              setUploadProgress(0);
+              alert('사진이 성공적으로 업로드되었습니다.');
+            } catch (err) {
+              console.error('Firestore 저장 중 오류:', err);
+              alert(`사진 정보 저장 중 오류가 발생했습니다: ${err.message}`);
+              setUploadProgress(0);
+            }
           }
-        };
-        
-        // 파일을 base64 인코딩된 문자열로 읽기
-        reader.readAsDataURL(uploadForm.file);
-        
+        );
       } catch (err) {
-        console.error('파일 업로드 중 오류 발생:', err);
-        alert(`파일 업로드 중 오류가 발생했습니다: ${err.message}`);
+        console.error('업로드 처리 중 오류:', err);
+        alert(`업로드 처리 중 오류가 발생했습니다: ${err.message}`);
         setUploadProgress(0);
       }
     } catch (err) {
-      console.error('사진 업로드 중 오류 발생:', err);
-      alert(`사진 업로드 중 오류가 발생했습니다: ${err.message}`);
+      console.error('업로드 처리 중 오류:', err);
+      alert(`업로드 처리 중 오류가 발생했습니다: ${err.message}`);
       setUploadProgress(0);
     }
   };
@@ -354,10 +345,33 @@ export default function Gallery() {
     if (!confirm('정말로 이 사진을 삭제하시겠습니까?')) return;
     
     try {
-      // Firestore에서 문서 삭제
-      await deleteDoc(doc(db, 'gallery', photo.id));
+      // 1. Firebase Storage에서 이미지 파일 삭제
+      if (photo.fileName) {
+        try {
+          const storageRef = ref(storage, `gallery/${photo.fileName}`);
+          await deleteObject(storageRef);
+          console.log('Storage에서 이미지 삭제 완료');
+        } catch (storageErr) {
+          console.error('Storage 이미지 삭제 중 오류:', storageErr);
+          // Storage 오류가 있어도 Firestore 문서는 삭제 진행
+        }
+      } else if (photo.imageUrl && photo.imageUrl.includes('firebase')) {
+        // 파일명이 없지만 Firebase URL이 있는 경우
+        try {
+          const urlRef = ref(storage, photo.imageUrl);
+          await deleteObject(urlRef);
+          console.log('Storage에서 URL로 이미지 삭제 완료');
+        } catch (urlErr) {
+          console.error('Storage URL 삭제 중 오류:', urlErr);
+          // 계속 진행
+        }
+      }
       
-      // 상태 업데이트
+      // 2. Firestore에서 문서 삭제
+      await deleteDoc(doc(db, 'gallery', photo.id));
+      console.log('Firestore에서 문서 삭제 완료');
+      
+      // 3. 상태 업데이트
       setPhotos(prevPhotos => prevPhotos.filter(p => p.id !== photo.id));
       
       if (isViewModalOpen && selectedPhoto?.id === photo.id) {
@@ -366,8 +380,8 @@ export default function Gallery() {
       
       alert('사진이 성공적으로 삭제되었습니다.');
     } catch (err) {
-      console.error('Firestore 문서 삭제 중 오류:', err);
-      alert('사진 삭제 중 오류가 발생했습니다.');
+      console.error('사진 삭제 중 오류:', err);
+      alert(`사진 삭제 중 오류가 발생했습니다: ${err.message}`);
     }
   };
 
