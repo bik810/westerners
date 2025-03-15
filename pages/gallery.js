@@ -150,8 +150,10 @@ export default function Gallery() {
         const bucketUrl = storage.app.options.storageBucket;
         console.log('사용 중인 Storage 버킷:', bucketUrl);
         
+        // 명시적으로 전체 경로 지정 (CORS 문제 해결을 위해)
         const storageRef = ref(storage, `gallery/${fileName}`);
         console.log('Storage 참조 생성됨:', storageRef);
+        console.log('Storage 참조 전체 경로:', storageRef.toString());
         
         console.log('uploadBytesResumable 호출 시작');
         // 메타데이터 추가
@@ -172,106 +174,117 @@ export default function Gallery() {
           await currentUser.getIdToken(true);
         }
         
-        const uploadTask = uploadBytesResumable(storageRef, uploadForm.file, metadata);
-        console.log('uploadTask 생성됨:', uploadTask);
+        // CORS 문제 해결을 위한 추가 설정
+        console.log('CORS 설정 확인 - 현재 도메인:', window.location.origin);
+        console.log('CORS 설정 확인 - 버킷 URL:', `https://${bucketUrl}`);
         
-        // 업로드 진행 상태 모니터링
-        uploadTask.on(
-          'state_changed',
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 80;
-            console.log('업로드 진행률:', progress);
-            setUploadProgress(progress);
-          },
-          (error) => {
-            console.error('Storage 업로드 중 오류:', error);
-            console.error('오류 코드:', error.code);
-            console.error('오류 메시지:', error.message);
-            console.error('오류 세부 정보:', error.serverResponse);
-            
-            // 오류 유형에 따른 처리
-            let errorMessage = '이미지 업로드 중 오류가 발생했습니다.';
-            
-            if (error.code === 'storage/unauthorized') {
-              errorMessage = '권한이 없습니다. 로그인 상태를 확인하고 다시 시도해주세요.';
-              // 토큰 갱신 시도
-              auth.currentUser?.getIdToken(true)
-                .then(() => console.log('토큰 갱신 시도'))
-                .catch(e => console.error('토큰 갱신 실패:', e));
-            } else if (error.code === 'storage/canceled') {
-              errorMessage = '업로드가 취소되었습니다.';
-            } else if (error.code === 'storage/retry-limit-exceeded') {
-              errorMessage = '네트워크 상태가 불안정합니다. 다시 시도해주세요.';
-            } else if (error.code === 'storage/invalid-checksum') {
-              errorMessage = '파일이 손상되었습니다. 다른 파일을 선택해주세요.';
-            } else if (error.code === 'storage/server-file-wrong-size') {
-              errorMessage = '파일 크기 오류가 발생했습니다. 다시 시도해주세요.';
-            }
-            
-            // CORS 관련 오류 확인
-            if (error.message && error.message.includes('CORS')) {
-              errorMessage = 'CORS 오류: 서버 설정 문제가 있습니다. 관리자에게 문의하세요.';
-              console.error('CORS 오류 감지됨. 현재 도메인:', window.location.origin);
-            }
-            
-            alert(errorMessage);
-            setUploadProgress(0);
-          },
-          async () => {
-            // 업로드 완료 후 다운로드 URL 가져오기
-            try {
-              console.log('업로드 완료, URL 가져오기 시작');
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              console.log('이미지 URL:', downloadURL);
-              setUploadProgress(90);
+        try {
+          const uploadTask = uploadBytesResumable(storageRef, uploadForm.file, metadata);
+          console.log('uploadTask 생성됨:', uploadTask);
+          
+          // 업로드 진행 상태 모니터링
+          uploadTask.on(
+            'state_changed',
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 80;
+              console.log('업로드 진행률:', progress);
+              setUploadProgress(progress);
+            },
+            (error) => {
+              console.error('Storage 업로드 중 오류:', error);
+              console.error('오류 코드:', error.code);
+              console.error('오류 메시지:', error.message);
+              console.error('오류 세부 정보:', error.serverResponse);
               
-              // Firestore에 사진 정보 저장
-              const photoData = {
-                title: uploadForm.title,
-                date: uploadForm.date,
-                description: uploadForm.description || '',
-                imageUrl: downloadURL, // Storage에서 가져온 URL
-                fileName: fileName,
-                uploadedAt: new Date().toISOString(),
-                uploadedBy: currentUser.uid
-              };
+              // 오류 유형에 따른 처리
+              let errorMessage = '이미지 업로드 중 오류가 발생했습니다.';
               
-              console.log('Firestore에 저장 시작', photoData);
+              if (error.code === 'storage/unauthorized') {
+                errorMessage = '권한이 없습니다. 로그인 상태를 확인하고 다시 시도해주세요.';
+                // 토큰 갱신 시도
+                auth.currentUser?.getIdToken(true)
+                  .then(() => console.log('토큰 갱신 시도'))
+                  .catch(e => console.error('토큰 갱신 실패:', e));
+              } else if (error.code === 'storage/canceled') {
+                errorMessage = '업로드가 취소되었습니다.';
+              } else if (error.code === 'storage/retry-limit-exceeded') {
+                errorMessage = '네트워크 상태가 불안정합니다. 다시 시도해주세요.';
+              } else if (error.code === 'storage/invalid-checksum') {
+                errorMessage = '파일이 손상되었습니다. 다른 파일을 선택해주세요.';
+              } else if (error.code === 'storage/server-file-wrong-size') {
+                errorMessage = '파일 크기 오류가 발생했습니다. 다시 시도해주세요.';
+              }
               
-              // Firestore에 문서 추가
-              const docRef = await addDoc(collection(db, 'gallery'), photoData);
-              console.log('Firestore에 저장 완료, 문서 ID:', docRef.id);
-              setUploadProgress(100);
+              // CORS 관련 오류 확인
+              if (error.message && error.message.includes('CORS')) {
+                errorMessage = 'CORS 오류: 서버 설정 문제가 있습니다. 관리자에게 문의하세요.';
+                console.error('CORS 오류 감지됨. 현재 도메인:', window.location.origin);
+              }
               
-              // 상태 업데이트
-              setPhotos(prevPhotos => [
-                {
-                  id: docRef.id,
-                  ...photoData
-                },
-                ...prevPhotos
-              ]);
-              
-              // 폼 초기화
-              setUploadForm({
-                title: '',
-                date: '',
-                description: '',
-                file: null
-              });
-              
-              // 모달 닫기
-              setIsUploadModalOpen(false);
+              alert(errorMessage);
               setUploadProgress(0);
-              alert('사진이 성공적으로 업로드되었습니다.');
-            } catch (err) {
-              console.error('Firestore 저장 중 오류:', err);
-              console.error('오류 세부 정보:', err.stack);
-              alert(`사진 정보 저장 중 오류가 발생했습니다: ${err.message}`);
-              setUploadProgress(0);
+            },
+            async () => {
+              // 업로드 완료 후 다운로드 URL 가져오기
+              try {
+                console.log('업로드 완료, URL 가져오기 시작');
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                console.log('이미지 URL:', downloadURL);
+                setUploadProgress(90);
+                
+                // Firestore에 사진 정보 저장
+                const photoData = {
+                  title: uploadForm.title,
+                  date: uploadForm.date,
+                  description: uploadForm.description || '',
+                  imageUrl: downloadURL, // Storage에서 가져온 URL
+                  fileName: fileName,
+                  uploadedAt: new Date().toISOString(),
+                  uploadedBy: currentUser.uid
+                };
+                
+                console.log('Firestore에 저장 시작', photoData);
+                
+                // Firestore에 문서 추가
+                const docRef = await addDoc(collection(db, 'gallery'), photoData);
+                console.log('Firestore에 저장 완료, 문서 ID:', docRef.id);
+                setUploadProgress(100);
+                
+                // 상태 업데이트
+                setPhotos(prevPhotos => [
+                  {
+                    id: docRef.id,
+                    ...photoData
+                  },
+                  ...prevPhotos
+                ]);
+                
+                // 폼 초기화
+                setUploadForm({
+                  title: '',
+                  date: '',
+                  description: '',
+                  file: null
+                });
+                
+                // 모달 닫기
+                setIsUploadModalOpen(false);
+                setUploadProgress(0);
+                alert('사진이 성공적으로 업로드되었습니다.');
+              } catch (err) {
+                console.error('Firestore 저장 중 오류:', err);
+                console.error('오류 세부 정보:', err.stack);
+                alert(`사진 정보 저장 중 오류가 발생했습니다: ${err.message}`);
+                setUploadProgress(0);
+              }
             }
-          }
-        );
+          );
+        } catch (err) {
+          console.error('업로드 처리 중 오류:', err);
+          console.error('오류 세부 정보:', err.stack);
+          alert(`업로드 처리 중 오류가 발생했습니다: ${err.message}`);
+          setUploadProgress(0);
+        }
       } catch (err) {
         console.error('업로드 처리 중 오류:', err);
         console.error('오류 세부 정보:', err.stack);
