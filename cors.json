@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["https://westerners-kappa.vercel.app", "http://localhost:3000", "http://192.168.1.41:3000"],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": ["Content-Type", "Content-Length", "Content-Encoding", "Content-Disposition"]
+  }
+] 
