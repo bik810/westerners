@@ -40,10 +40,15 @@ export default function Gallery() {
         const photosQuery = query(collection(db, 'gallery'), orderBy('date', 'desc'));
         const photosSnapshot = await getDocs(photosQuery);
         
-        const photosData = photosSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        const photosData = photosSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            // Base64 이미지 데이터가 있으면 그것을 사용, 없으면 기존 imageUrl 사용
+            imageUrl: data.imageData || data.imageUrl
+          };
+        });
         
         setPhotos(photosData);
         setError(null);
@@ -106,11 +111,11 @@ export default function Gallery() {
         return;
       }
       
-      // 파일 크기 검증 (10MB 제한)
-      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      // 파일 크기 검증 (5MB 제한 - Base64로 인코딩하면 크기가 약 33% 증가함)
+      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
       if (uploadForm.file.size > MAX_FILE_SIZE) {
         console.log('파일 크기 초과:', uploadForm.file.size);
-        alert('파일 크기는 10MB 이하여야 합니다.');
+        alert('파일 크기는 5MB 이하여야 합니다.');
         return;
       }
       
@@ -125,172 +130,106 @@ export default function Gallery() {
       console.log('업로드 시작', uploadForm);
       setUploadProgress(0);
       
-      // 파일 이름 생성
-      const fileExtension = uploadForm.file.name.split('.').pop();
-      const fileName = `gallery_${Date.now()}.${fileExtension}`;
-      console.log('생성된 파일명:', fileName);
+      // 현재 인증 상태 확인
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        console.error('사용자가 인증되지 않았습니다.');
+        alert('로그인이 필요합니다. 다시 로그인 후 시도해주세요.');
+        return;
+      }
       
-      try {
-        // 현재 인증 상태 확인
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-          console.error('사용자가 인증되지 않았습니다.');
-          alert('로그인이 필요합니다. 다시 로그인 후 시도해주세요.');
-          return;
+      // 인증 토큰 갱신
+      const token = await currentUser.getIdToken(true);
+      console.log('인증 토큰 갱신됨, 업로드 계속 진행');
+      
+      // 파일을 Base64로 인코딩
+      const reader = new FileReader();
+      
+      reader.onloadstart = () => {
+        console.log('파일 읽기 시작');
+        setUploadProgress(10);
+      };
+      
+      reader.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = (event.loaded / event.total) * 40;
+          console.log('파일 읽기 진행률:', progress);
+          setUploadProgress(10 + progress);
         }
-        
-        // 인증 토큰 갱신
-        const token = await currentUser.getIdToken(true);
-        console.log('인증 토큰 갱신됨, 업로드 계속 진행');
-        
-        // Firebase Storage에 이미지 업로드
-        console.log('Firebase Storage 참조 생성 시작');
-        
-        // 명시적으로 전체 버킷 경로 지정
-        const bucketUrl = storage.app.options.storageBucket;
-        console.log('사용 중인 Storage 버킷:', bucketUrl);
-        
-        // 명시적으로 전체 경로 지정 (CORS 문제 해결을 위해)
-        const storageRef = ref(storage, `gallery/${fileName}`);
-        console.log('Storage 참조 생성됨:', storageRef);
-        console.log('Storage 참조 전체 경로:', storageRef.toString());
-        
-        console.log('uploadBytesResumable 호출 시작');
-        // 메타데이터 추가
-        const metadata = {
-          contentType: uploadForm.file.type,
-          customMetadata: {
-            'uploadedBy': currentUser.uid,
-            'uploadedAt': new Date().toISOString(),
-            'authToken': 'Bearer ' + token.substring(0, 10) + '...' // 토큰 일부만 로깅 (보안)
-          }
-        };
-        
-        // 업로드 전 토큰 확인
-        if (localStorage.getItem('firebaseAuthToken')) {
-          console.log('localStorage에 토큰 존재, 길이:', localStorage.getItem('firebaseAuthToken').length);
-        } else {
-          console.warn('localStorage에 토큰이 없음, 새로 발급 시도');
-          await currentUser.getIdToken(true);
-        }
-        
-        // CORS 문제 해결을 위한 추가 설정
-        console.log('CORS 설정 확인 - 현재 도메인:', window.location.origin);
-        console.log('CORS 설정 확인 - 버킷 URL:', `https://${bucketUrl}`);
-        
+      };
+      
+      reader.onerror = (error) => {
+        console.error('파일 읽기 오류:', error);
+        alert('파일을 읽는 중 오류가 발생했습니다.');
+        setUploadProgress(0);
+      };
+      
+      reader.onload = async () => {
         try {
-          const uploadTask = uploadBytesResumable(storageRef, uploadForm.file, metadata);
-          console.log('uploadTask 생성됨:', uploadTask);
+          console.log('파일 읽기 완료');
+          setUploadProgress(50);
           
-          // 업로드 진행 상태 모니터링
-          uploadTask.on(
-            'state_changed',
-            (snapshot) => {
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 80;
-              console.log('업로드 진행률:', progress);
-              setUploadProgress(progress);
+          // Base64 인코딩된 이미지 데이터
+          const base64Image = reader.result;
+          console.log('Base64 인코딩 완료, 길이:', base64Image.length);
+          
+          // 파일 이름 생성
+          const fileExtension = uploadForm.file.name.split('.').pop();
+          const fileName = `gallery_${Date.now()}.${fileExtension}`;
+          
+          // Firestore에 사진 정보 저장
+          const photoData = {
+            title: uploadForm.title,
+            date: uploadForm.date,
+            description: uploadForm.description || '',
+            imageData: base64Image, // Base64 인코딩된 이미지 데이터
+            contentType: uploadForm.file.type,
+            fileName: fileName,
+            uploadedAt: new Date().toISOString(),
+            uploadedBy: currentUser.uid
+          };
+          
+          console.log('Firestore에 저장 시작');
+          setUploadProgress(70);
+          
+          // Firestore에 문서 추가
+          const docRef = await addDoc(collection(db, 'gallery'), photoData);
+          console.log('Firestore에 저장 완료, 문서 ID:', docRef.id);
+          setUploadProgress(100);
+          
+          // 상태 업데이트
+          setPhotos(prevPhotos => [
+            {
+              id: docRef.id,
+              ...photoData,
+              imageUrl: base64Image // 이미지 URL 대신 Base64 데이터 사용
             },
-            (error) => {
-              console.error('Storage 업로드 중 오류:', error);
-              console.error('오류 코드:', error.code);
-              console.error('오류 메시지:', error.message);
-              console.error('오류 세부 정보:', error.serverResponse);
-              
-              // 오류 유형에 따른 처리
-              let errorMessage = '이미지 업로드 중 오류가 발생했습니다.';
-              
-              if (error.code === 'storage/unauthorized') {
-                errorMessage = '권한이 없습니다. 로그인 상태를 확인하고 다시 시도해주세요.';
-                // 토큰 갱신 시도
-                auth.currentUser?.getIdToken(true)
-                  .then(() => console.log('토큰 갱신 시도'))
-                  .catch(e => console.error('토큰 갱신 실패:', e));
-              } else if (error.code === 'storage/canceled') {
-                errorMessage = '업로드가 취소되었습니다.';
-              } else if (error.code === 'storage/retry-limit-exceeded') {
-                errorMessage = '네트워크 상태가 불안정합니다. 다시 시도해주세요.';
-              } else if (error.code === 'storage/invalid-checksum') {
-                errorMessage = '파일이 손상되었습니다. 다른 파일을 선택해주세요.';
-              } else if (error.code === 'storage/server-file-wrong-size') {
-                errorMessage = '파일 크기 오류가 발생했습니다. 다시 시도해주세요.';
-              }
-              
-              // CORS 관련 오류 확인
-              if (error.message && error.message.includes('CORS')) {
-                errorMessage = 'CORS 오류: 서버 설정 문제가 있습니다. 관리자에게 문의하세요.';
-                console.error('CORS 오류 감지됨. 현재 도메인:', window.location.origin);
-              }
-              
-              alert(errorMessage);
-              setUploadProgress(0);
-            },
-            async () => {
-              // 업로드 완료 후 다운로드 URL 가져오기
-              try {
-                console.log('업로드 완료, URL 가져오기 시작');
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                console.log('이미지 URL:', downloadURL);
-                setUploadProgress(90);
-                
-                // Firestore에 사진 정보 저장
-                const photoData = {
-                  title: uploadForm.title,
-                  date: uploadForm.date,
-                  description: uploadForm.description || '',
-                  imageUrl: downloadURL, // Storage에서 가져온 URL
-                  fileName: fileName,
-                  uploadedAt: new Date().toISOString(),
-                  uploadedBy: currentUser.uid
-                };
-                
-                console.log('Firestore에 저장 시작', photoData);
-                
-                // Firestore에 문서 추가
-                const docRef = await addDoc(collection(db, 'gallery'), photoData);
-                console.log('Firestore에 저장 완료, 문서 ID:', docRef.id);
-                setUploadProgress(100);
-                
-                // 상태 업데이트
-                setPhotos(prevPhotos => [
-                  {
-                    id: docRef.id,
-                    ...photoData
-                  },
-                  ...prevPhotos
-                ]);
-                
-                // 폼 초기화
-                setUploadForm({
-                  title: '',
-                  date: '',
-                  description: '',
-                  file: null
-                });
-                
-                // 모달 닫기
-                setIsUploadModalOpen(false);
-                setUploadProgress(0);
-                alert('사진이 성공적으로 업로드되었습니다.');
-              } catch (err) {
-                console.error('Firestore 저장 중 오류:', err);
-                console.error('오류 세부 정보:', err.stack);
-                alert(`사진 정보 저장 중 오류가 발생했습니다: ${err.message}`);
-                setUploadProgress(0);
-              }
-            }
-          );
+            ...prevPhotos
+          ]);
+          
+          // 폼 초기화
+          setUploadForm({
+            title: '',
+            date: '',
+            description: '',
+            file: null
+          });
+          
+          // 모달 닫기
+          setIsUploadModalOpen(false);
+          setUploadProgress(0);
+          alert('사진이 성공적으로 업로드되었습니다.');
         } catch (err) {
-          console.error('업로드 처리 중 오류:', err);
+          console.error('Firestore 저장 중 오류:', err);
           console.error('오류 세부 정보:', err.stack);
-          alert(`업로드 처리 중 오류가 발생했습니다: ${err.message}`);
+          alert(`사진 정보 저장 중 오류가 발생했습니다: ${err.message}`);
           setUploadProgress(0);
         }
-      } catch (err) {
-        console.error('업로드 처리 중 오류:', err);
-        console.error('오류 세부 정보:', err.stack);
-        alert(`업로드 처리 중 오류가 발생했습니다: ${err.message}`);
-        setUploadProgress(0);
-      }
+      };
+      
+      // 파일 읽기 시작
+      reader.readAsDataURL(uploadForm.file);
+      
     } catch (err) {
       console.error('업로드 처리 중 오류:', err);
       console.error('오류 세부 정보:', err.stack);
@@ -440,33 +379,11 @@ export default function Gallery() {
     if (!confirm('정말로 이 사진을 삭제하시겠습니까?')) return;
     
     try {
-      // 1. Firebase Storage에서 이미지 파일 삭제
-      if (photo.fileName) {
-        try {
-          const storageRef = ref(storage, `gallery/${photo.fileName}`);
-          await deleteObject(storageRef);
-          console.log('Storage에서 이미지 삭제 완료');
-        } catch (storageErr) {
-          console.error('Storage 이미지 삭제 중 오류:', storageErr);
-          // Storage 오류가 있어도 Firestore 문서는 삭제 진행
-        }
-      } else if (photo.imageUrl && photo.imageUrl.includes('firebase')) {
-        // 파일명이 없지만 Firebase URL이 있는 경우
-        try {
-          const urlRef = ref(storage, photo.imageUrl);
-          await deleteObject(urlRef);
-          console.log('Storage에서 URL로 이미지 삭제 완료');
-        } catch (urlErr) {
-          console.error('Storage URL 삭제 중 오류:', urlErr);
-          // 계속 진행
-        }
-      }
-      
-      // 2. Firestore에서 문서 삭제
+      // Firestore에서 문서 삭제
       await deleteDoc(doc(db, 'gallery', photo.id));
       console.log('Firestore에서 문서 삭제 완료');
       
-      // 3. 상태 업데이트
+      // 상태 업데이트
       setPhotos(prevPhotos => prevPhotos.filter(p => p.id !== photo.id));
       
       if (isViewModalOpen && selectedPhoto?.id === photo.id) {
