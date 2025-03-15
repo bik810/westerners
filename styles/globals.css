@@ -24,32 +24,51 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* 입력 필드 텍스트 색상 설정 */
+input, textarea, select {
+  color: #000000 !important;
+  font-weight: 500 !important;
+  font-size: 16px !important; /* 모바일에서 최적의 폰트 크기 */
+}
+
+/* 모바일에서 입력 필드 패딩 조정 */
+@media (max-width: 768px) {
+  input, textarea, select {
+    padding: 12px !important;
+  }
+}
+
 /* 플레이스홀더 텍스트 색상 진하게 설정 */
 ::placeholder {
-  color: #666666 !important;
+  color: #444444 !important;
   opacity: 1 !important;
+  font-weight: 500 !important;
 }
 
 /* WebKit 브라우저용 */
 ::-webkit-input-placeholder {
-  color: #666666 !important;
+  color: #444444 !important;
   opacity: 1 !important;
+  font-weight: 500 !important;
 }
 
 /* Firefox 4-18용 */
 :-moz-placeholder {
-  color: #666666 !important;
+  color: #444444 !important;
   opacity: 1 !important;
+  font-weight: 500 !important;
 }
 
 /* Firefox 19+용 */
 ::-moz-placeholder {
-  color: #666666 !important;
+  color: #444444 !important;
   opacity: 1 !important;
+  font-weight: 500 !important;
 }
 
 /* IE 10+용 */
 :-ms-input-placeholder {
-  color: #666666 !important;
+  color: #444444 !important;
   opacity: 1 !important;
+  font-weight: 500 !important;
 }
