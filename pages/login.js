@@ -90,107 +90,111 @@ export default function Login() {
 
       <Header />
 
-      <main className="flex-grow flex items-center justify-center bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="relative z-10 max-w-md w-full space-y-8 bg-white bg-opacity-95 backdrop-filter backdrop-blur-sm rounded-2xl shadow-xl p-8 transform transition-all duration-300 hover:shadow-2xl">
-          <div>
-            <h2 className="mt-2 text-center text-4xl font-extrabold text-gray-900">
-              <span className="text-blue-600">W</span>esterners
-            </h2>
-            <h3 className="mt-2 text-center text-2xl font-bold text-gray-800">
-              로그인
-            </h3>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              Westerners 모임 회원 전용 페이지입니다
-            </p>
-            {isDevelopment && (
-              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-sm">
-                <p className="font-bold mb-2 text-yellow-800">개발 환경 테스트 계정</p>
-                <div className="space-y-2">
-                  {testAccounts.map((account) => (
-                    <div key={account.email} className="flex justify-between items-center p-3 bg-white rounded-lg border border-yellow-100 shadow-sm transition-all duration-200 hover:shadow-md">
-                      <div>
-                        <span className="font-medium text-gray-700">{account.role}:</span> 
-                        <span className="ml-1 text-gray-600">{account.email} / {account.password}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => fillTestAccount(account)}
-                        className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full transition-all duration-200 transform hover:scale-105 shadow-sm"
-                      >
-                        사용
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-2 text-xs text-gray-600">* 클릭하면 자동으로 입력됩니다</p>
-              </div>
-            )}
-          </div>
-          
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-all duration-200"
-                  placeholder="이메일 주소를 입력하세요"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-all duration-200"
-                  placeholder="비밀번호를 입력하세요"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg relative animate-pulse">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white ${
-                  loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-[1.02] shadow-md`}
-              >
-                {loading ? (
-                  <>
-                    <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    </span>
-                    로그인 중...
-                  </>
-                ) : (
-                  '로그인'
-                )}
-              </button>
-            </div>
-          </form>
+      {/* 타이틀 섹션 */}
+      <section className="pt-24 md:pt-32 pb-12 md:pb-20 bg-gradient-to-r from-blue-900 to-blue-800 text-white">
+        <div className="container mx-auto px-4 md:px-6 text-center">
+          <h1 className="text-3xl md:text-5xl font-bold mb-4 md:mb-6">Westerners 로그인</h1>
+          <p className="text-lg md:text-xl text-blue-100 max-w-3xl mx-auto">
+            Westerners 모임 회원 전용 페이지입니다
+          </p>
         </div>
-      </main>
+      </section>
+
+      {/* 내용 섹션 */}
+      <section className="py-10 md:py-16 bg-gray-50">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="p-5 md:p-8">
+              {isDevelopment && (
+                <div className="mb-6 md:mb-8 p-3 md:p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-sm">
+                  <p className="font-bold mb-2 text-yellow-800">개발 환경 테스트 계정</p>
+                  <div className="space-y-2">
+                    {testAccounts.map((account) => (
+                      <div key={account.email} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 bg-white rounded-lg border border-yellow-100 shadow-sm transition-all duration-200 hover:shadow-md">
+                        <div className="mb-2 sm:mb-0">
+                          <span className="font-medium text-gray-700">{account.role}:</span> 
+                          <span className="ml-1 text-gray-600 break-all">{account.email} / {account.password}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => fillTestAccount(account)}
+                          className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full transition-all duration-200 transform hover:scale-105 shadow-sm w-full sm:w-auto mt-1 sm:mt-0"
+                        >
+                          사용
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-xs text-gray-600">* 클릭하면 자동으로 입력됩니다</p>
+                </div>
+              )}
+              
+              <form className="space-y-6" onSubmit={handleSubmit}>
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      className="appearance-none relative block w-full px-4 py-3 md:py-4 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 text-base sm:text-sm transition-all duration-200"
+                      placeholder="이메일 주소를 입력하세요"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      autoComplete="current-password"
+                      required
+                      className="appearance-none relative block w-full px-4 py-3 md:py-4 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 text-base sm:text-sm transition-all duration-200"
+                      placeholder="비밀번호를 입력하세요"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg relative animate-pulse">
+                    {error}
+                  </div>
+                )}
+
+                <div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={`group relative w-full flex justify-center py-3 md:py-4 px-4 border border-transparent text-base sm:text-sm font-medium rounded-lg text-white ${
+                      loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-[1.02] shadow-md`}
+                  >
+                    {loading ? (
+                      <>
+                        <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        </span>
+                        로그인 중...
+                      </>
+                    ) : (
+                      '로그인'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <Footer />
     </div>
