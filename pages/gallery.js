@@ -145,11 +145,20 @@ export default function Gallery() {
         
         // Firebase Storage에 이미지 업로드
         console.log('Firebase Storage 참조 생성 시작');
+        // 명시적으로 전체 버킷 경로 지정
         const storageRef = ref(storage, `gallery/${fileName}`);
         console.log('Storage 참조 생성됨:', storageRef);
         
         console.log('uploadBytesResumable 호출 시작');
-        const uploadTask = uploadBytesResumable(storageRef, uploadForm.file);
+        // 메타데이터 추가
+        const metadata = {
+          contentType: uploadForm.file.type,
+          customMetadata: {
+            'uploadedBy': currentUser.uid,
+            'uploadedAt': new Date().toISOString()
+          }
+        };
+        const uploadTask = uploadBytesResumable(storageRef, uploadForm.file, metadata);
         console.log('uploadTask 생성됨:', uploadTask);
         
         // 업로드 진행 상태 모니터링
