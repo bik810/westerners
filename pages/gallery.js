@@ -80,16 +80,19 @@ export default function Gallery() {
     try {
       // 입력 검증
       if (!uploadForm.file) {
+        console.log('파일이 선택되지 않음');
         alert('파일을 선택해주세요.');
         return;
       }
       
       if (!uploadForm.title.trim()) {
+        console.log('제목이 입력되지 않음');
         alert('제목을 입력해주세요.');
         return;
       }
       
       if (!uploadForm.date.trim()) {
+        console.log('날짜가 입력되지 않음');
         alert('날짜를 입력해주세요.');
         return;
       }
@@ -97,6 +100,7 @@ export default function Gallery() {
       // 날짜 형식 검증 (YYYY/MM/DD)
       const datePattern = /^\d{4}\/\d{2}\/\d{2}$/;
       if (!datePattern.test(uploadForm.date)) {
+        console.log('날짜 형식이 올바르지 않음:', uploadForm.date);
         alert('날짜는 YYYY/MM/DD 형식으로 입력해주세요. (예: 2023/12/25)');
         return;
       }
@@ -104,6 +108,7 @@ export default function Gallery() {
       // 파일 크기 검증 (10MB 제한)
       const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
       if (uploadForm.file.size > MAX_FILE_SIZE) {
+        console.log('파일 크기 초과:', uploadForm.file.size);
         alert('파일 크기는 10MB 이하여야 합니다.');
         return;
       }
@@ -111,6 +116,7 @@ export default function Gallery() {
       // 파일 형식 검증
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(uploadForm.file.type)) {
+        console.log('지원되지 않는 파일 형식:', uploadForm.file.type);
         alert('지원되는 이미지 형식은 JPEG, PNG, GIF, WEBP입니다.');
         return;
       }
@@ -121,11 +127,17 @@ export default function Gallery() {
       // 파일 이름 생성
       const fileExtension = uploadForm.file.name.split('.').pop();
       const fileName = `gallery_${Date.now()}.${fileExtension}`;
+      console.log('생성된 파일명:', fileName);
       
       try {
         // Firebase Storage에 이미지 업로드
+        console.log('Firebase Storage 참조 생성 시작');
         const storageRef = ref(storage, `gallery/${fileName}`);
+        console.log('Storage 참조 생성됨:', storageRef);
+        
+        console.log('uploadBytesResumable 호출 시작');
         const uploadTask = uploadBytesResumable(storageRef, uploadForm.file);
+        console.log('uploadTask 생성됨:', uploadTask);
         
         // 업로드 진행 상태 모니터링
         uploadTask.on(
@@ -143,6 +155,7 @@ export default function Gallery() {
           async () => {
             // 업로드 완료 후 다운로드 URL 가져오기
             try {
+              console.log('업로드 완료, URL 가져오기 시작');
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
               console.log('이미지 URL:', downloadURL);
               setUploadProgress(90);
@@ -157,11 +170,11 @@ export default function Gallery() {
                 uploadedAt: new Date().toISOString()
               };
               
-              console.log('Firestore에 저장 시작');
+              console.log('Firestore에 저장 시작', photoData);
               
               // Firestore에 문서 추가
               const docRef = await addDoc(collection(db, 'gallery'), photoData);
-              console.log('Firestore에 저장 완료');
+              console.log('Firestore에 저장 완료, 문서 ID:', docRef.id);
               setUploadProgress(100);
               
               // 상태 업데이트
@@ -194,11 +207,13 @@ export default function Gallery() {
         );
       } catch (err) {
         console.error('업로드 처리 중 오류:', err);
+        console.error('오류 세부 정보:', err.stack);
         alert(`업로드 처리 중 오류가 발생했습니다: ${err.message}`);
         setUploadProgress(0);
       }
     } catch (err) {
       console.error('업로드 처리 중 오류:', err);
+      console.error('오류 세부 정보:', err.stack);
       alert(`업로드 처리 중 오류가 발생했습니다: ${err.message}`);
       setUploadProgress(0);
     }
@@ -489,7 +504,10 @@ export default function Gallery() {
             <div className="p-6">
               <h2 className="text-2xl font-bold mb-6 text-gray-800">사진 업로드</h2>
               
-              <form onSubmit={handleUpload} className="space-y-4">
+              <form onSubmit={(e) => {
+                console.log('폼 제출 이벤트 발생');
+                handleUpload(e);
+              }} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">제목</label>
                   <input
@@ -533,7 +551,10 @@ export default function Gallery() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={handleFileChange}
+                    onChange={(e) => {
+                      console.log('파일 선택 이벤트 발생', e.target.files);
+                      handleFileChange(e);
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
