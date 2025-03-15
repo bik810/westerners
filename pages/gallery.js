@@ -145,7 +145,11 @@ export default function Gallery() {
         
         // Firebase Storage에 이미지 업로드
         console.log('Firebase Storage 참조 생성 시작');
+        
         // 명시적으로 전체 버킷 경로 지정
+        const bucketUrl = storage.app.options.storageBucket;
+        console.log('사용 중인 Storage 버킷:', bucketUrl);
+        
         const storageRef = ref(storage, `gallery/${fileName}`);
         console.log('Storage 참조 생성됨:', storageRef);
         
@@ -155,9 +159,19 @@ export default function Gallery() {
           contentType: uploadForm.file.type,
           customMetadata: {
             'uploadedBy': currentUser.uid,
-            'uploadedAt': new Date().toISOString()
+            'uploadedAt': new Date().toISOString(),
+            'authToken': 'Bearer ' + token.substring(0, 10) + '...' // 토큰 일부만 로깅 (보안)
           }
         };
+        
+        // 업로드 전 토큰 확인
+        if (localStorage.getItem('firebaseAuthToken')) {
+          console.log('localStorage에 토큰 존재, 길이:', localStorage.getItem('firebaseAuthToken').length);
+        } else {
+          console.warn('localStorage에 토큰이 없음, 새로 발급 시도');
+          await currentUser.getIdToken(true);
+        }
+        
         const uploadTask = uploadBytesResumable(storageRef, uploadForm.file, metadata);
         console.log('uploadTask 생성됨:', uploadTask);
         
@@ -174,7 +188,33 @@ export default function Gallery() {
             console.error('오류 코드:', error.code);
             console.error('오류 메시지:', error.message);
             console.error('오류 세부 정보:', error.serverResponse);
-            alert(`이미지 업로드 중 오류가 발생했습니다: ${error.message}`);
+            
+            // 오류 유형에 따른 처리
+            let errorMessage = '이미지 업로드 중 오류가 발생했습니다.';
+            
+            if (error.code === 'storage/unauthorized') {
+              errorMessage = '권한이 없습니다. 로그인 상태를 확인하고 다시 시도해주세요.';
+              // 토큰 갱신 시도
+              auth.currentUser?.getIdToken(true)
+                .then(() => console.log('토큰 갱신 시도'))
+                .catch(e => console.error('토큰 갱신 실패:', e));
+            } else if (error.code === 'storage/canceled') {
+              errorMessage = '업로드가 취소되었습니다.';
+            } else if (error.code === 'storage/retry-limit-exceeded') {
+              errorMessage = '네트워크 상태가 불안정합니다. 다시 시도해주세요.';
+            } else if (error.code === 'storage/invalid-checksum') {
+              errorMessage = '파일이 손상되었습니다. 다른 파일을 선택해주세요.';
+            } else if (error.code === 'storage/server-file-wrong-size') {
+              errorMessage = '파일 크기 오류가 발생했습니다. 다시 시도해주세요.';
+            }
+            
+            // CORS 관련 오류 확인
+            if (error.message && error.message.includes('CORS')) {
+              errorMessage = 'CORS 오류: 서버 설정 문제가 있습니다. 관리자에게 문의하세요.';
+              console.error('CORS 오류 감지됨. 현재 도메인:', window.location.origin);
+            }
+            
+            alert(errorMessage);
             setUploadProgress(0);
           },
           async () => {
