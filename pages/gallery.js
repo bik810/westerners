@@ -9,6 +9,7 @@ import { db, storage } from '../lib/firebase';
 import { collection, doc, getDoc, setDoc, getDocs, addDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { useAuth } from '../lib/authContext';
+import { auth } from '../lib/firebase';
 
 export default function Gallery() {
   const [photos, setPhotos] = useState([]);
@@ -130,6 +131,18 @@ export default function Gallery() {
       console.log('생성된 파일명:', fileName);
       
       try {
+        // 현재 인증 상태 확인
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+          console.error('사용자가 인증되지 않았습니다.');
+          alert('로그인이 필요합니다. 다시 로그인 후 시도해주세요.');
+          return;
+        }
+        
+        // 인증 토큰 갱신
+        const token = await currentUser.getIdToken(true);
+        console.log('인증 토큰 갱신됨, 업로드 계속 진행');
+        
         // Firebase Storage에 이미지 업로드
         console.log('Firebase Storage 참조 생성 시작');
         const storageRef = ref(storage, `gallery/${fileName}`);
@@ -149,6 +162,9 @@ export default function Gallery() {
           },
           (error) => {
             console.error('Storage 업로드 중 오류:', error);
+            console.error('오류 코드:', error.code);
+            console.error('오류 메시지:', error.message);
+            console.error('오류 세부 정보:', error.serverResponse);
             alert(`이미지 업로드 중 오류가 발생했습니다: ${error.message}`);
             setUploadProgress(0);
           },
@@ -167,7 +183,8 @@ export default function Gallery() {
                 description: uploadForm.description || '',
                 imageUrl: downloadURL, // Storage에서 가져온 URL
                 fileName: fileName,
-                uploadedAt: new Date().toISOString()
+                uploadedAt: new Date().toISOString(),
+                uploadedBy: currentUser.uid
               };
               
               console.log('Firestore에 저장 시작', photoData);
@@ -200,6 +217,7 @@ export default function Gallery() {
               alert('사진이 성공적으로 업로드되었습니다.');
             } catch (err) {
               console.error('Firestore 저장 중 오류:', err);
+              console.error('오류 세부 정보:', err.stack);
               alert(`사진 정보 저장 중 오류가 발생했습니다: ${err.message}`);
               setUploadProgress(0);
             }
