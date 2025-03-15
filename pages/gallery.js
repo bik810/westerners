@@ -7,9 +7,10 @@ import Modal from '../components/Modal';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { db, storage } from '../lib/firebase';
 import { collection, doc, getDoc, setDoc, getDocs, addDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref } from 'firebase/storage';
 import { useAuth } from '../lib/authContext';
 import { auth } from '../lib/firebase';
+import { compressImage } from '../lib/utils/imageCompressor';
 
 export default function Gallery() {
   const [photos, setPhotos] = useState([]);
@@ -63,21 +64,6 @@ export default function Gallery() {
     fetchPhotos();
   }, []);
 
-  // Firebase Storage 초기화 확인
-  useEffect(() => {
-    try {
-      console.log('Firebase Storage 초기화 확인');
-      console.log('Storage 객체:', storage);
-      console.log('Storage 버킷:', storage.app.options.storageBucket);
-      
-      // 테스트 참조 생성
-      const testRef = ref(storage, 'test');
-      console.log('테스트 참조 생성 성공:', testRef);
-    } catch (err) {
-      console.error('Firebase Storage 초기화 확인 중 오류:', err);
-    }
-  }, []);
-
   // 사진 업로드 처리
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -111,11 +97,11 @@ export default function Gallery() {
         return;
       }
       
-      // 파일 크기 검증 (10MB 제한 - 압축할 것이므로 제한 완화)
-      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      // 파일 크기 검증 (15MB 제한 - 압축할 것이므로 제한 완화)
+      const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
       if (uploadForm.file.size > MAX_FILE_SIZE) {
         console.log('파일 크기 초과:', uploadForm.file.size);
-        alert('파일 크기는 10MB 이하여야 합니다.');
+        alert('파일 크기는 15MB 이하여야 합니다.');
         return;
       }
       
@@ -142,97 +128,23 @@ export default function Gallery() {
       const token = await currentUser.getIdToken(true);
       console.log('인증 토큰 갱신됨, 업로드 계속 진행');
       
-      // 이미지 압축 및 리사이징 함수
-      const compressImage = (file) => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          
-          reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target.result;
-            
-            img.onload = () => {
-              // 최대 크기 설정 (가로/세로 최대 1200px)
-              const MAX_WIDTH = 1200;
-              const MAX_HEIGHT = 1200;
-              
-              let width = img.width;
-              let height = img.height;
-              
-              // 이미지 크기 조정
-              if (width > height) {
-                if (width > MAX_WIDTH) {
-                  height = Math.round(height * (MAX_WIDTH / width));
-                  width = MAX_WIDTH;
-                }
-              } else {
-                if (height > MAX_HEIGHT) {
-                  width = Math.round(width * (MAX_HEIGHT / height));
-                  height = MAX_HEIGHT;
-                }
-              }
-              
-              const canvas = document.createElement('canvas');
-              canvas.width = width;
-              canvas.height = height;
-              
-              const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0, width, height);
-              
-              // 압축 품질 설정 (0.7 = 70% 품질)
-              const quality = 0.7;
-              
-              // JPEG 형식으로 변환하여 크기 줄이기
-              const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-              
-              console.log('원본 이미지 크기:', event.target.result.length, '압축 후 크기:', compressedDataUrl.length);
-              
-              // Firestore 문서 크기 제한 (1MB) 확인
-              if (compressedDataUrl.length > 1000000) { // 여유를 두고 1MB보다 약간 작게 설정
-                console.warn('압축 후에도 이미지가 너무 큽니다. 더 강한 압축 적용');
-                // 더 강한 압축 적용
-                const moreCompressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
-                
-                if (moreCompressedDataUrl.length > 1000000) {
-                  // 그래도 크다면 해상도 더 줄이기
-                  canvas.width = width * 0.7;
-                  canvas.height = height * 0.7;
-                  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                  const finalDataUrl = canvas.toDataURL('image/jpeg', 0.5);
-                  
-                  console.log('최종 압축 후 크기:', finalDataUrl.length);
-                  resolve(finalDataUrl);
-                } else {
-                  console.log('추가 압축 후 크기:', moreCompressedDataUrl.length);
-                  resolve(moreCompressedDataUrl);
-                }
-              } else {
-                resolve(compressedDataUrl);
-              }
-            };
-            
-            img.onerror = (error) => {
-              console.error('이미지 로드 중 오류:', error);
-              reject(error);
-            };
-          };
-          
-          reader.onerror = (error) => {
-            console.error('파일 읽기 오류:', error);
-            reject(error);
-          };
-        });
-      };
-      
       try {
-        setUploadProgress(10);
-        console.log('이미지 압축 시작');
-        
         // 이미지 압축 및 리사이징
-        const compressedImage = await compressImage(uploadForm.file);
+        const compressedImage = await compressImage(
+          uploadForm.file, 
+          {
+            maxWidth: 1200,
+            maxHeight: 1200,
+            quality: 0.7,
+            maxSize: 900000 // 900KB (Firestore 제한 1MB보다 작게)
+          },
+          (progress) => {
+            // 압축 진행 상황 업데이트 (0-50%)
+            setUploadProgress(progress);
+          }
+        );
+        
         console.log('이미지 압축 완료, 크기:', compressedImage.length);
-        setUploadProgress(50);
         
         // 파일 이름 생성
         const fileExtension = 'jpg'; // 압축 후에는 항상 JPEG 형식
@@ -301,10 +213,10 @@ export default function Gallery() {
       const selectedFile = e.target.files[0];
       console.log('선택된 파일:', selectedFile.name, selectedFile.type, selectedFile.size);
       
-      // 파일 크기 검증 (10MB 제한)
-      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      // 파일 크기 검증 (15MB 제한)
+      const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
       if (selectedFile.size > MAX_FILE_SIZE) {
-        alert('파일 크기는 10MB 이하여야 합니다.');
+        alert('파일 크기는 15MB 이하여야 합니다.');
         e.target.value = ''; // 파일 선택 초기화
         return;
       }
@@ -665,7 +577,7 @@ export default function Gallery() {
               </div>
               <div className="mt-4">
                 <h3 className="text-lg font-semibold">{selectedPhoto.title}</h3>
-                <p className="text-sm text-gray-500">{selectedPhoto.date}</p>
+                <p className="text-sm text-gray-500">{formatDate(selectedPhoto.date)}</p>
                 <p className="mt-2">{selectedPhoto.description}</p>
               </div>
               {canEdit && (
