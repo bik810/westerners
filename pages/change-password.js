@@ -41,7 +41,7 @@ export default function ChangePassword() {
       setSuccess('');
       setLoading(true);
       
-      await changePassword(password);
+      await changePassword(currentUser, password);
       
       setSuccess('비밀번호가 성공적으로 변경되었습니다.');
       
@@ -50,9 +50,6 @@ export default function ChangePassword() {
         if (redirect) {
           // URL 디코딩하여 원래 가려던 페이지로 이동
           router.push(decodeURIComponent(redirect));
-        } else if (userProfile?.isFirstLogin) {
-          // 첫 로그인인 경우 홈으로 이동
-          router.push('/');
         } else {
           // 그 외의 경우 홈으로 이동
           router.push('/');
@@ -88,90 +85,94 @@ export default function ChangePassword() {
 
       <Header />
 
-      <section className="pt-32 pb-20 bg-gradient-to-r from-blue-900 to-blue-800 text-white">
-        <div className="container mx-auto px-6 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">비밀번호 변경</h1>
-          <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-            {userProfile?.isFirstLogin 
-              ? '첫 로그인 시 비밀번호를 변경해주세요' 
-              : '새로운 비밀번호를 설정해주세요'}
-          </p>
-        </div>
-      </section>
+      <main className="flex-grow flex items-center justify-center bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 max-w-md w-full space-y-8 bg-white bg-opacity-95 backdrop-filter backdrop-blur-sm rounded-2xl shadow-xl p-8 transform transition-all duration-300 hover:shadow-2xl">
+          <div>
+            <h2 className="mt-2 text-center text-4xl font-extrabold text-gray-900">
+              <span className="text-blue-600">W</span>esterners
+            </h2>
+            <h3 className="mt-2 text-center text-2xl font-bold text-gray-800">
+              비밀번호 변경
+            </h3>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              {userProfile?.isFirstLogin 
+                ? '첫 로그인 시 비밀번호를 변경해주세요' 
+                : '새로운 비밀번호를 설정해주세요'}
+            </p>
+          </div>
 
-      <section className="py-16 bg-gray-50 flex-grow">
-        <div className="container mx-auto px-6">
-          <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden">
-            <div className="p-8">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-gray-800">비밀번호 변경</h2>
-                <p className="text-gray-600 mt-2">
-                  {userProfile?.isFirstLogin 
-                    ? '보안을 위해 비밀번호를 변경해주세요' 
-                    : '새로운 비밀번호를 입력해주세요'}
-                </p>
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg relative animate-pulse">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg relative animate-pulse">
+              {success}
+            </div>
+          )}
+          
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  새 비밀번호
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-all duration-200"
+                  placeholder="새 비밀번호를 입력하세요"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">최소 6자 이상이어야 합니다</p>
               </div>
 
-              {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-                  <span className="block sm:inline">{error}</span>
-                </div>
-              )}
-
-              {success && (
-                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
-                  <span className="block sm:inline">{success}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                    새 비밀번호
-                  </label>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="새 비밀번호를 입력하세요"
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-1">최소 6자 이상이어야 합니다</p>
-                </div>
-
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                    비밀번호 확인
-                  </label>
-                  <input
-                    id="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="비밀번호를 다시 입력하세요"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                      loading ? 'opacity-70 cursor-not-allowed' : ''
-                    }`}
-                  >
-                    {loading ? '처리 중...' : '비밀번호 변경'}
-                  </button>
-                </div>
-              </form>
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  비밀번호 확인
+                </label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-all duration-200"
+                  placeholder="비밀번호를 다시 입력하세요"
+                  required
+                />
+              </div>
             </div>
-          </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={loading}
+                className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white ${
+                  loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-[1.02] shadow-md`}
+              >
+                {loading ? (
+                  <>
+                    <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    </span>
+                    처리 중...
+                  </>
+                ) : (
+                  '비밀번호 변경'
+                )}
+              </button>
+            </div>
+          </form>
         </div>
-      </section>
+      </main>
 
       <Footer />
     </div>

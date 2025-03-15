@@ -90,65 +90,69 @@ export default function Login() {
 
       <Header />
 
-      <main className="flex-grow flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
+      <main className="flex-grow flex items-center justify-center bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 max-w-md w-full space-y-8 bg-white bg-opacity-95 backdrop-filter backdrop-blur-sm rounded-2xl shadow-xl p-8 transform transition-all duration-300 hover:shadow-2xl">
           <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              로그인
+            <h2 className="mt-2 text-center text-4xl font-extrabold text-gray-900">
+              <span className="text-blue-600">W</span>esterners
             </h2>
+            <h3 className="mt-2 text-center text-2xl font-bold text-gray-800">
+              로그인
+            </h3>
             <p className="mt-2 text-center text-sm text-gray-600">
               Westerners 모임 회원 전용 페이지입니다
             </p>
             {isDevelopment && (
-              <div className="mt-4 p-4 bg-yellow-100 border border-yellow-400 rounded text-sm">
-                <p className="font-bold mb-2">개발 환경 테스트 계정</p>
+              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-sm">
+                <p className="font-bold mb-2 text-yellow-800">개발 환경 테스트 계정</p>
                 <div className="space-y-2">
                   {testAccounts.map((account) => (
-                    <div key={account.email} className="flex justify-between items-center p-2 bg-white rounded border border-yellow-300">
+                    <div key={account.email} className="flex justify-between items-center p-3 bg-white rounded-lg border border-yellow-100 shadow-sm transition-all duration-200 hover:shadow-md">
                       <div>
-                        <span className="font-medium">{account.role}:</span> {account.email} / {account.password}
+                        <span className="font-medium text-gray-700">{account.role}:</span> 
+                        <span className="ml-1 text-gray-600">{account.email} / {account.password}</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => fillTestAccount(account)}
-                        className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded"
+                        className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full transition-all duration-200 transform hover:scale-105 shadow-sm"
                       >
                         사용
                       </button>
                     </div>
                   ))}
                 </div>
-                <p className="mt-2 text-xs text-gray-700">* 클릭하면 자동으로 입력됩니다</p>
+                <p className="mt-2 text-xs text-gray-600">* 클릭하면 자동으로 입력됩니다</p>
               </div>
             )}
           </div>
           
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div className="rounded-md shadow-sm -space-y-px">
+            <div className="space-y-4">
               <div>
-                <label htmlFor="email" className="sr-only">이메일</label>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
                 <input
                   id="email"
                   name="email"
                   type="email"
                   autoComplete="email"
                   required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="이메일"
+                  className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-all duration-200"
+                  placeholder="이메일 주소를 입력하세요"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div>
-                <label htmlFor="password" className="sr-only">비밀번호</label>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
                 <input
                   id="password"
                   name="password"
                   type="password"
                   autoComplete="current-password"
                   required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="비밀번호"
+                  className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-all duration-200"
+                  placeholder="비밀번호를 입력하세요"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -156,7 +160,7 @@ export default function Login() {
             </div>
 
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg relative animate-pulse">
                 {error}
               </div>
             )}
@@ -165,9 +169,9 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
+                className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white ${
                   loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-[1.02] shadow-md`}
               >
                 {loading ? (
                   <>
