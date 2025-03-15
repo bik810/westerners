@@ -111,11 +111,11 @@ export default function Gallery() {
         return;
       }
       
-      // 파일 크기 검증 (5MB 제한 - Base64로 인코딩하면 크기가 약 33% 증가함)
-      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+      // 파일 크기 검증 (10MB 제한 - 압축할 것이므로 제한 완화)
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
       if (uploadForm.file.size > MAX_FILE_SIZE) {
         console.log('파일 크기 초과:', uploadForm.file.size);
-        alert('파일 크기는 5MB 이하여야 합니다.');
+        alert('파일 크기는 10MB 이하여야 합니다.');
         return;
       }
       
@@ -142,94 +142,150 @@ export default function Gallery() {
       const token = await currentUser.getIdToken(true);
       console.log('인증 토큰 갱신됨, 업로드 계속 진행');
       
-      // 파일을 Base64로 인코딩
-      const reader = new FileReader();
-      
-      reader.onloadstart = () => {
-        console.log('파일 읽기 시작');
-        setUploadProgress(10);
-      };
-      
-      reader.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const progress = (event.loaded / event.total) * 40;
-          console.log('파일 읽기 진행률:', progress);
-          setUploadProgress(10 + progress);
-        }
-      };
-      
-      reader.onerror = (error) => {
-        console.error('파일 읽기 오류:', error);
-        alert('파일을 읽는 중 오류가 발생했습니다.');
-        setUploadProgress(0);
-      };
-      
-      reader.onload = async () => {
-        try {
-          console.log('파일 읽기 완료');
-          setUploadProgress(50);
+      // 이미지 압축 및 리사이징 함수
+      const compressImage = (file) => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
           
-          // Base64 인코딩된 이미지 데이터
-          const base64Image = reader.result;
-          console.log('Base64 인코딩 완료, 길이:', base64Image.length);
-          
-          // 파일 이름 생성
-          const fileExtension = uploadForm.file.name.split('.').pop();
-          const fileName = `gallery_${Date.now()}.${fileExtension}`;
-          
-          // Firestore에 사진 정보 저장
-          const photoData = {
-            title: uploadForm.title,
-            date: uploadForm.date,
-            description: uploadForm.description || '',
-            imageData: base64Image, // Base64 인코딩된 이미지 데이터
-            contentType: uploadForm.file.type,
-            fileName: fileName,
-            uploadedAt: new Date().toISOString(),
-            uploadedBy: currentUser.uid
+          reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            
+            img.onload = () => {
+              // 최대 크기 설정 (가로/세로 최대 1200px)
+              const MAX_WIDTH = 1200;
+              const MAX_HEIGHT = 1200;
+              
+              let width = img.width;
+              let height = img.height;
+              
+              // 이미지 크기 조정
+              if (width > height) {
+                if (width > MAX_WIDTH) {
+                  height = Math.round(height * (MAX_WIDTH / width));
+                  width = MAX_WIDTH;
+                }
+              } else {
+                if (height > MAX_HEIGHT) {
+                  width = Math.round(width * (MAX_HEIGHT / height));
+                  height = MAX_HEIGHT;
+                }
+              }
+              
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+              
+              // 압축 품질 설정 (0.7 = 70% 품질)
+              const quality = 0.7;
+              
+              // JPEG 형식으로 변환하여 크기 줄이기
+              const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+              
+              console.log('원본 이미지 크기:', event.target.result.length, '압축 후 크기:', compressedDataUrl.length);
+              
+              // Firestore 문서 크기 제한 (1MB) 확인
+              if (compressedDataUrl.length > 1000000) { // 여유를 두고 1MB보다 약간 작게 설정
+                console.warn('압축 후에도 이미지가 너무 큽니다. 더 강한 압축 적용');
+                // 더 강한 압축 적용
+                const moreCompressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
+                
+                if (moreCompressedDataUrl.length > 1000000) {
+                  // 그래도 크다면 해상도 더 줄이기
+                  canvas.width = width * 0.7;
+                  canvas.height = height * 0.7;
+                  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                  const finalDataUrl = canvas.toDataURL('image/jpeg', 0.5);
+                  
+                  console.log('최종 압축 후 크기:', finalDataUrl.length);
+                  resolve(finalDataUrl);
+                } else {
+                  console.log('추가 압축 후 크기:', moreCompressedDataUrl.length);
+                  resolve(moreCompressedDataUrl);
+                }
+              } else {
+                resolve(compressedDataUrl);
+              }
+            };
+            
+            img.onerror = (error) => {
+              console.error('이미지 로드 중 오류:', error);
+              reject(error);
+            };
           };
           
-          console.log('Firestore에 저장 시작');
-          setUploadProgress(70);
-          
-          // Firestore에 문서 추가
-          const docRef = await addDoc(collection(db, 'gallery'), photoData);
-          console.log('Firestore에 저장 완료, 문서 ID:', docRef.id);
-          setUploadProgress(100);
-          
-          // 상태 업데이트
-          setPhotos(prevPhotos => [
-            {
-              id: docRef.id,
-              ...photoData,
-              imageUrl: base64Image // 이미지 URL 대신 Base64 데이터 사용
-            },
-            ...prevPhotos
-          ]);
-          
-          // 폼 초기화
-          setUploadForm({
-            title: '',
-            date: '',
-            description: '',
-            file: null
-          });
-          
-          // 모달 닫기
-          setIsUploadModalOpen(false);
-          setUploadProgress(0);
-          alert('사진이 성공적으로 업로드되었습니다.');
-        } catch (err) {
-          console.error('Firestore 저장 중 오류:', err);
-          console.error('오류 세부 정보:', err.stack);
-          alert(`사진 정보 저장 중 오류가 발생했습니다: ${err.message}`);
-          setUploadProgress(0);
-        }
+          reader.onerror = (error) => {
+            console.error('파일 읽기 오류:', error);
+            reject(error);
+          };
+        });
       };
       
-      // 파일 읽기 시작
-      reader.readAsDataURL(uploadForm.file);
-      
+      try {
+        setUploadProgress(10);
+        console.log('이미지 압축 시작');
+        
+        // 이미지 압축 및 리사이징
+        const compressedImage = await compressImage(uploadForm.file);
+        console.log('이미지 압축 완료, 크기:', compressedImage.length);
+        setUploadProgress(50);
+        
+        // 파일 이름 생성
+        const fileExtension = 'jpg'; // 압축 후에는 항상 JPEG 형식
+        const fileName = `gallery_${Date.now()}.${fileExtension}`;
+        
+        // Firestore에 사진 정보 저장
+        const photoData = {
+          title: uploadForm.title,
+          date: uploadForm.date,
+          description: uploadForm.description || '',
+          imageData: compressedImage, // 압축된 Base64 이미지 데이터
+          contentType: 'image/jpeg',
+          fileName: fileName,
+          uploadedAt: new Date().toISOString(),
+          uploadedBy: currentUser.uid
+        };
+        
+        console.log('Firestore에 저장 시작');
+        setUploadProgress(70);
+        
+        // Firestore에 문서 추가
+        const docRef = await addDoc(collection(db, 'gallery'), photoData);
+        console.log('Firestore에 저장 완료, 문서 ID:', docRef.id);
+        setUploadProgress(100);
+        
+        // 상태 업데이트
+        setPhotos(prevPhotos => [
+          {
+            id: docRef.id,
+            ...photoData,
+            imageUrl: compressedImage // 이미지 URL 대신 압축된 Base64 데이터 사용
+          },
+          ...prevPhotos
+        ]);
+        
+        // 폼 초기화
+        setUploadForm({
+          title: '',
+          date: '',
+          description: '',
+          file: null
+        });
+        
+        // 모달 닫기
+        setIsUploadModalOpen(false);
+        setUploadProgress(0);
+        alert('사진이 성공적으로 업로드되었습니다.');
+      } catch (err) {
+        console.error('이미지 처리 중 오류:', err);
+        console.error('오류 세부 정보:', err.stack);
+        alert(`이미지 처리 중 오류가 발생했습니다: ${err.message}`);
+        setUploadProgress(0);
+      }
     } catch (err) {
       console.error('업로드 처리 중 오류:', err);
       console.error('오류 세부 정보:', err.stack);
