@@ -365,6 +365,34 @@ export default function Gallery() {
     }
   };
 
+  // 사진 다운로드 처리
+  const handleDownloadPhoto = (photo) => {
+    try {
+      // 이미지 데이터 가져오기
+      const imageData = photo.imageUrl;
+      
+      // 다운로드 링크 생성
+      const link = document.createElement('a');
+      link.href = imageData;
+      
+      // 파일명 설정 (날짜_제목.jpg 형식)
+      const fileName = `${photo.date.replace(/\//g, '-')}_${photo.title}.jpg`;
+      link.download = fileName;
+      
+      // 링크 클릭 이벤트 발생시켜 다운로드 시작
+      document.body.appendChild(link);
+      link.click();
+      
+      // 링크 제거
+      document.body.removeChild(link);
+      
+      console.log('이미지 다운로드 완료:', fileName);
+    } catch (err) {
+      console.error('이미지 다운로드 중 오류:', err);
+      alert('이미지 다운로드 중 오류가 발생했습니다.');
+    }
+  };
+
   // 날짜 포맷팅 함수
   const formatDate = (dateString) => {
     try {
@@ -488,15 +516,33 @@ export default function Gallery() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">날짜</label>
-                  <input
-                    type="text"
-                    name="date"
-                    value={uploadForm.date}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="YYYY/MM/DD 형식으로 입력하세요"
-                    required
-                  />
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      name="date"
+                      value={uploadForm.date}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="YYYY/MM/DD 형식으로 입력하세요"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const today = new Date();
+                        const year = today.getFullYear();
+                        const month = String(today.getMonth() + 1).padStart(2, '0');
+                        const day = String(today.getDate()).padStart(2, '0');
+                        setUploadForm(prev => ({
+                          ...prev,
+                          date: `${year}/${month}/${day}`
+                        }));
+                      }}
+                      className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors whitespace-nowrap"
+                    >
+                      오늘 날짜
+                    </button>
+                  </div>
                   <p className="mt-1 text-xs text-gray-500">예: 2023/12/25</p>
                 </div>
                 
@@ -580,8 +626,17 @@ export default function Gallery() {
                 <p className="text-sm text-gray-500">{formatDate(selectedPhoto.date)}</p>
                 <p className="mt-2">{selectedPhoto.description}</p>
               </div>
-              {canEdit && (
-                <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex justify-end space-x-2">
+                <button
+                  onClick={() => handleDownloadPhoto(selectedPhoto)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                  </svg>
+                  다운로드
+                </button>
+                {canEdit && (
                   <button
                     onClick={() => {
                       handleDeletePhoto(selectedPhoto);
@@ -591,8 +646,8 @@ export default function Gallery() {
                   >
                     삭제
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
         </Modal>

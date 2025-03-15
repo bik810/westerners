@@ -687,7 +687,7 @@ export default function Fees() {
               <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
                 날짜
               </label>
-              <div className="flex items-center">
+              <div className="flex space-x-2">
                 <input
                   type="text"
                   id="date"
@@ -698,6 +698,22 @@ export default function Fees() {
                   placeholder="YYYY/MM/DD 형식으로 입력하세요"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const today = new Date();
+                    const year = today.getFullYear();
+                    const month = String(today.getMonth() + 1).padStart(2, '0');
+                    const day = String(today.getDate()).padStart(2, '0');
+                    setFormData(prev => ({
+                      ...prev,
+                      date: `${year}/${month}/${day}`
+                    }));
+                  }}
+                  className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors whitespace-nowrap"
+                >
+                  오늘 날짜
+                </button>
               </div>
               <div className="text-xs text-gray-500 mt-1">
                 예: 2023/12/25
