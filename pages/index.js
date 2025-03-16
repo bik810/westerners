@@ -2,7 +2,6 @@ import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useAuth } from '../lib/authContext';
@@ -15,25 +14,6 @@ export default function Home() {
   const [currentExecutive, setCurrentExecutive] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [message, setMessage] = useState('');
-  const router = useRouter();
-  
-  // URL에서 메시지 파라미터 확인
-  useEffect(() => {
-    if (router.query.message) {
-      setMessage(decodeURIComponent(router.query.message));
-      // 메시지를 표시한 후 URL에서 제거 (브라우저 히스토리에 남지 않도록)
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
-      
-      // 5초 후 메시지 자동 제거
-      const timer = setTimeout(() => {
-        setMessage('');
-      }, 5000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [router.query.message]);
   
   // 권한 확인 함수
   const canEdit = userProfile && (userProfile.role === 'admin' || userProfile.role === 'treasurer');
@@ -80,20 +60,6 @@ export default function Home() {
       </Head>
 
       <Header />
-
-      {/* 알림 메시지 */}
-      {message && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md">
-          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg shadow-lg relative animate-fade-in">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              {message}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 text-white overflow-hidden">
@@ -382,8 +348,15 @@ export default function Home() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-16 md:py-24 bg-gray-50">
+      <section id="about" className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-4 md:px-6">
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-2xl md:text-4xl font-bold text-gray-800 mb-4 md:mb-5 relative inline-block">
+              모임 소개
+              <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-20 md:w-32 h-1 bg-blue-600"></span>
+            </h2>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 max-w-4xl mx-auto">
             <div className="bg-white rounded-xl shadow-xl overflow-hidden transform transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 group">
               <div className="h-2 md:h-3 bg-gradient-to-r from-blue-500 to-blue-700"></div>

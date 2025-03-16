@@ -85,15 +85,6 @@ input, textarea, select {
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 @keyframes pulse-slow {
   0%, 100% {
     opacity: 1;
@@ -129,10 +120,6 @@ input, textarea, select {
 
 .animate-fade-in-up {
   animation: fadeInUp 0.8s ease-out forwards;
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
 }
 
 .animate-pulse-slow {
