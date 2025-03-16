@@ -147,8 +147,8 @@ export default function MembersManagement() {
     <ProtectedRoute requiredRole="admin">
       <div className="flex flex-col min-h-screen">
         <Head>
-          <title>Westerners - 회원 관리</title>
-          <meta name="description" content="Westerners 모임 회원 관리" />
+          <title>Westerners - 계정 관리</title>
+          <meta name="description" content="Westerners 모임 계정 관리" />
           <link rel="icon" href="/favicon.ico" />
         </Head>
 
@@ -156,9 +156,9 @@ export default function MembersManagement() {
 
         <section className="pt-32 pb-20 bg-gradient-to-r from-blue-900 to-blue-800 text-white">
           <div className="container mx-auto px-6 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">회원 관리</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">계정 관리</h1>
             <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-              Westerners 모임 회원을 관리합니다
+              Westerners 모임 계정을 관리합니다
             </p>
           </div>
         </section>
@@ -179,7 +179,7 @@ export default function MembersManagement() {
               <div className="bg-white rounded-xl shadow-xl overflow-hidden">
                 <div className="p-8">
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-gray-800">회원 목록</h3>
+                    <h3 className="text-xl font-bold text-gray-800">계정 목록</h3>
                     <button
                       onClick={() => handleOpenModal('add')}
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
@@ -187,7 +187,7 @@ export default function MembersManagement() {
                       <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>
-                      회원 추가
+                      계정 추가
                     </button>
                   </div>
                   
@@ -278,11 +278,11 @@ export default function MembersManagement() {
 
         <Footer />
 
-        {/* 회원 추가/수정 모달 */}
+        {/* 계정 추가/수정 모달 */}
         <Modal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          title={modalType === 'add' ? '회원 추가' : '회원 정보 수정'}
+          title={modalType === 'add' ? '계정 추가' : '계정 정보 수정'}
         >
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

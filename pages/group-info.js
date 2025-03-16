@@ -34,6 +34,15 @@ export default function GroupInfo() {
   });
   const [rulesActiveTab, setRulesActiveTab] = useState('general');
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
+  const [isRuleEditModalOpen, setIsRuleEditModalOpen] = useState(false);
+  const [selectedRule, setSelectedRule] = useState(null);
+  const [ruleFormData, setRuleFormData] = useState({
+    chapter: '',
+    section: '',
+    title: '',
+    content: '',
+    category: 'general'
+  });
   const { userProfile } = useAuth();
   
   // 권한 확인 함수
@@ -399,6 +408,140 @@ export default function GroupInfo() {
     setIsRulesModalOpen(false);
   };
 
+  // 회칙 수정 모달 열기
+  const handleOpenRuleEditModal = (rule = null) => {
+    setSelectedRule(rule);
+    
+    if (rule) {
+      setRuleFormData({
+        chapter: rule.chapter || '',
+        section: rule.section || '',
+        title: rule.title || '',
+        content: rule.content || '',
+        category: rulesActiveTab
+      });
+    } else {
+      setRuleFormData({
+        chapter: '',
+        section: '',
+        title: '',
+        content: '',
+        category: rulesActiveTab
+      });
+    }
+    
+    setIsRuleEditModalOpen(true);
+  };
+
+  // 회칙 수정 모달 닫기
+  const handleCloseRuleEditModal = () => {
+    setIsRuleEditModalOpen(false);
+    setSelectedRule(null);
+    setRuleFormData({
+      chapter: '',
+      section: '',
+      title: '',
+      content: '',
+      category: 'general'
+    });
+  };
+
+  // 회칙 폼 데이터 변경 처리
+  const handleRuleFormChange = (e) => {
+    const { name, value } = e.target;
+    setRuleFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // 회칙 폼 제출 처리
+  const handleRuleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const ruleData = {
+        chapter: ruleFormData.chapter,
+        section: ruleFormData.section,
+        title: ruleFormData.title,
+        content: ruleFormData.content,
+        updatedAt: new Date().toISOString()
+      };
+      
+      // 현재 회칙 데이터 복사
+      const updatedRulesData = { ...rulesData };
+      const category = ruleFormData.category;
+      
+      if (selectedRule) {
+        // 기존 회칙 수정
+        const ruleIndex = updatedRulesData[category].findIndex(r => r.id === selectedRule.id);
+        
+        if (ruleIndex !== -1) {
+          updatedRulesData[category][ruleIndex] = {
+            ...updatedRulesData[category][ruleIndex],
+            ...ruleData
+          };
+        }
+        
+        // Firestore 업데이트
+        await setDoc(doc(db, 'settings', 'rules'), updatedRulesData, { merge: true });
+        
+        // 상태 업데이트
+        setRulesData(updatedRulesData);
+        
+        alert('회칙이 수정되었습니다.');
+      } else {
+        // 새 회칙 추가
+        const newRule = {
+          id: Date.now().toString(), // 간단한 고유 ID 생성
+          ...ruleData,
+          createdAt: new Date().toISOString()
+        };
+        
+        // 배열에 새 회칙 추가
+        updatedRulesData[category] = [...updatedRulesData[category], newRule];
+        
+        // Firestore 업데이트
+        await setDoc(doc(db, 'settings', 'rules'), updatedRulesData, { merge: true });
+        
+        // 상태 업데이트
+        setRulesData(updatedRulesData);
+        
+        alert('회칙이 추가되었습니다.');
+      }
+      
+      handleCloseRuleEditModal();
+    } catch (err) {
+      console.error('회칙 저장 중 오류 발생:', err);
+      alert('회칙을 저장하는 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 회칙 삭제 처리
+  const handleDeleteRule = async (ruleId) => {
+    if (!confirm('정말로 이 회칙을 삭제하시겠습니까?')) return;
+    
+    try {
+      // 현재 회칙 데이터 복사
+      const updatedRulesData = { ...rulesData };
+      const category = rulesActiveTab;
+      
+      // 해당 회칙 찾기 및 제거
+      updatedRulesData[category] = updatedRulesData[category].filter(rule => rule.id !== ruleId);
+      
+      // Firestore 업데이트
+      await setDoc(doc(db, 'settings', 'rules'), updatedRulesData, { merge: true });
+      
+      // 상태 업데이트
+      setRulesData(updatedRulesData);
+      
+      alert('회칙이 삭제되었습니다.');
+    } catch (err) {
+      console.error('회칙 삭제 중 오류 발생:', err);
+      alert('회칙을 삭제하는 중 오류가 발생했습니다.');
+    }
+  };
+
   return (
     <ProtectedRoute>
       <div className="flex flex-col min-h-screen">
@@ -590,20 +733,20 @@ export default function GroupInfo() {
                           <table className="min-w-full divide-y divide-gray-200">
                             <thead>
                               <tr>
-                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">
                                   세대
                                 </th>
-                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">
                                   회장
                                 </th>
-                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">
                                   총무
                                 </th>
-                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">
                                   임기
                                 </th>
                                 {canEdit && (
-                                  <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  <th className="px-6 py-3 bg-gray-50 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">
                                     관리
                                   </th>
                                 )}
@@ -617,36 +760,36 @@ export default function GroupInfo() {
                                     index === 0 ? 'bg-blue-50' : ''
                                   }`}
                                 >
-                                  <td className="px-6 py-4 whitespace-nowrap">
+                                  <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
                                     {index === 0 ? (
-                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                                         현재 {executive.generation}대
                                       </span>
                                     ) : (
-                                      `${executive.generation}대`
+                                      <span className="text-sm md:text-base font-medium">{executive.generation}대</span>
                                     )}
                                   </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
+                                  <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-sm md:text-base font-medium">
                                     {executive.president}
                                   </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
+                                  <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-sm md:text-base font-medium">
                                     {executive.treasurer}
                                   </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
+                                  <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-sm md:text-base font-medium">
                                     {executive.term}
                                   </td>
                                   {canEdit && (
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                    <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-sm">
                                       <div className="flex space-x-2">
                                         <button
                                           onClick={() => handleOpenExecutiveModal(executive)}
-                                          className="text-blue-600 hover:text-blue-800"
+                                          className="text-blue-600 hover:text-blue-800 text-sm md:text-base"
                                         >
                                           수정
                                         </button>
                                         <button
                                           onClick={() => handleDeleteExecutive(executive.id)}
-                                          className="text-red-600 hover:text-red-800"
+                                          className="text-red-600 hover:text-red-800 text-sm md:text-base"
                                         >
                                           삭제
                                         </button>
@@ -671,69 +814,82 @@ export default function GroupInfo() {
                     <div className="animate-fadeIn">
                       <div className="flex justify-between items-center mb-6">
                         <h3 className="text-xl font-bold text-gray-800">Westerners 회칙</h3>
-                        <button 
-                          onClick={handleOpenRulesModal}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
-                        >
-                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                          </svg>
-                          회칙 상세 보기
-                        </button>
+                        <div className="flex space-x-2">
+                          <button 
+                            onClick={handleOpenRulesModal}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+                          >
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            회칙 전문
+                          </button>
+                          {canEdit && (
+                            <button
+                              onClick={() => handleOpenRuleEditModal()}
+                              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center"
+                            >
+                              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                              </svg>
+                              회칙 추가
+                            </button>
+                          )}
+                        </div>
                       </div>
                       
                       {/* Rules Tabs */}
-                      <div className="flex flex-wrap border-b mb-6">
+                      <div className="flex flex-wrap border-b mb-6 overflow-x-auto">
                         <button
                           onClick={() => setRulesActiveTab('general')}
-                          className={`px-4 py-2 text-sm font-medium transition-colors duration-300 ${
+                          className={`px-4 py-3 text-sm md:text-base font-medium transition-colors duration-300 whitespace-nowrap ${
                             rulesActiveTab === 'general'
-                              ? 'text-blue-600 border-b-2 border-blue-600'
-                              : 'text-gray-500 hover:text-blue-600'
+                              ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                              : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
                           }`}
                         >
-                          제 1 장 단체 정의
+                          <span className="font-bold">1장</span> 단체 정의
                         </button>
                         <button
                           onClick={() => setRulesActiveTab('members')}
-                          className={`px-4 py-2 text-sm font-medium transition-colors duration-300 ${
+                          className={`px-4 py-3 text-sm md:text-base font-medium transition-colors duration-300 whitespace-nowrap ${
                             rulesActiveTab === 'members'
-                              ? 'text-blue-600 border-b-2 border-blue-600'
-                              : 'text-gray-500 hover:text-blue-600'
+                              ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                              : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
                           }`}
                         >
-                          제 2 장 회원
+                          <span className="font-bold">2장</span> 회원
                         </button>
                         <button
                           onClick={() => setRulesActiveTab('finance')}
-                          className={`px-4 py-2 text-sm font-medium transition-colors duration-300 ${
+                          className={`px-4 py-3 text-sm md:text-base font-medium transition-colors duration-300 whitespace-nowrap ${
                             rulesActiveTab === 'finance'
-                              ? 'text-blue-600 border-b-2 border-blue-600'
-                              : 'text-gray-500 hover:text-blue-600'
+                              ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                              : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
                           }`}
                         >
-                          제 3 장 재정
+                          <span className="font-bold">3장</span> 재정
                         </button>
                         <button
                           onClick={() => setRulesActiveTab('regular')}
-                          className={`px-4 py-2 text-sm font-medium transition-colors duration-300 ${
+                          className={`px-4 py-3 text-sm md:text-base font-medium transition-colors duration-300 whitespace-nowrap ${
                             rulesActiveTab === 'regular'
-                              ? 'text-blue-600 border-b-2 border-blue-600'
-                              : 'text-gray-500 hover:text-blue-600'
+                              ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                              : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
                           }`}
                         >
-                          제 4 장 정기 모임
+                          <span className="font-bold">4장</span> 정기 모임
                         </button>
                         <button
                           onClick={() => setRulesActiveTab('safety')}
-                          className={`px-4 py-2 text-sm font-medium transition-colors duration-300 ${
+                          className={`px-4 py-3 text-sm md:text-base font-medium transition-colors duration-300 whitespace-nowrap ${
                             rulesActiveTab === 'safety'
-                              ? 'text-blue-600 border-b-2 border-blue-600'
-                              : 'text-gray-500 hover:text-blue-600'
+                              ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                              : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
                           }`}
                         >
-                          제 5 장 안전
+                          <span className="font-bold">5장</span> 안전
                         </button>
                       </div>
                       
@@ -742,9 +898,29 @@ export default function GroupInfo() {
                         {rulesData[rulesActiveTab].length > 0 ? (
                           rulesData[rulesActiveTab].map((rule) => (
                             <div key={rule.id} className="bg-gray-50 p-4 rounded-lg">
-                              <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                                제 {rule.chapter} 장 {rule.section} 조 {rule.title}
-                              </h4>
+                              <div className="flex justify-between items-start mb-2">
+                                <h4 className="text-lg font-semibold text-gray-800">
+                                  <span className="text-blue-600">{rule.chapter}장 {rule.section}조</span>
+                                  <span className="mx-2">|</span>
+                                  <span>{rule.title}</span>
+                                </h4>
+                                {canEdit && (
+                                  <div className="flex space-x-2">
+                                    <button
+                                      onClick={() => handleOpenRuleEditModal(rule)}
+                                      className="text-blue-600 hover:text-blue-800 text-sm"
+                                    >
+                                      수정
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteRule(rule.id)}
+                                      className="text-red-600 hover:text-red-800 text-sm"
+                                    >
+                                      삭제
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                               <p className="text-gray-700 whitespace-pre-line">{rule.content}</p>
                             </div>
                           ))
@@ -952,7 +1128,117 @@ export default function GroupInfo() {
           </form>
         </Modal>
 
-        {/* 회칙 모달 */}
+        {/* 회칙 수정 모달 */}
+        <Modal
+          isOpen={isRuleEditModalOpen}
+          onClose={handleCloseRuleEditModal}
+          title={selectedRule ? '회칙 수정' : '회칙 추가'}
+        >
+          <form onSubmit={handleRuleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                카테고리
+              </label>
+              <select
+                id="category"
+                name="category"
+                value={ruleFormData.category}
+                onChange={handleRuleFormChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="general">1장 단체 정의</option>
+                <option value="members">2장 회원</option>
+                <option value="finance">3장 재정</option>
+                <option value="regular">4장 정기 모임</option>
+                <option value="safety">5장 안전</option>
+              </select>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="chapter" className="block text-sm font-medium text-gray-700 mb-1">
+                  장
+                </label>
+                <input
+                  type="text"
+                  id="chapter"
+                  name="chapter"
+                  value={ruleFormData.chapter}
+                  onChange={handleRuleFormChange}
+                  placeholder="예: 1"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="section" className="block text-sm font-medium text-gray-700 mb-1">
+                  조
+                </label>
+                <input
+                  type="text"
+                  id="section"
+                  name="section"
+                  value={ruleFormData.section}
+                  onChange={handleRuleFormChange}
+                  placeholder="예: 1"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                제목
+              </label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                value={ruleFormData.title}
+                onChange={handleRuleFormChange}
+                placeholder="예: 명칭"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
+                내용
+              </label>
+              <textarea
+                id="content"
+                name="content"
+                value={ruleFormData.content}
+                onChange={handleRuleFormChange}
+                rows="6"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              ></textarea>
+            </div>
+            
+            <div className="flex justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={handleCloseRuleEditModal}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+              >
+                취소
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md"
+              >
+                {selectedRule ? '수정' : '추가'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* 회칙 전체 보기 모달 */}
         <Modal
           isOpen={isRulesModalOpen}
           onClose={handleCloseRulesModal}
@@ -960,15 +1246,17 @@ export default function GroupInfo() {
           size="lg"
         >
           <div className="space-y-8 max-h-[70vh] overflow-y-auto p-2">
-            {/* 제 1 장 */}
+            {/* 1장 */}
             <div>
-              <h3 className="text-xl font-bold text-blue-800 mb-4 pb-2 border-b border-blue-200">제 1 장 단체 정의</h3>
+              <h3 className="text-xl font-bold text-blue-800 mb-4 pb-2 border-b border-blue-200">1장 단체 정의</h3>
               <div className="space-y-4">
                 {rulesData.general.length > 0 ? (
                   rulesData.general.map((rule) => (
                     <div key={rule.id} className="bg-gray-50 p-4 rounded-lg">
                       <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                        제 {rule.chapter} 장 {rule.section} 조 {rule.title}
+                        <span className="text-blue-600">{rule.chapter}장 {rule.section}조</span>
+                        <span className="mx-2">|</span>
+                        <span>{rule.title}</span>
                       </h4>
                       <p className="text-gray-700 whitespace-pre-line">{rule.content}</p>
                     </div>
@@ -979,15 +1267,17 @@ export default function GroupInfo() {
               </div>
             </div>
             
-            {/* 제 2 장 */}
+            {/* 2장 */}
             <div>
-              <h3 className="text-xl font-bold text-blue-800 mb-4 pb-2 border-b border-blue-200">제 2 장 회원</h3>
+              <h3 className="text-xl font-bold text-blue-800 mb-4 pb-2 border-b border-blue-200">2장 회원</h3>
               <div className="space-y-4">
                 {rulesData.members.length > 0 ? (
                   rulesData.members.map((rule) => (
                     <div key={rule.id} className="bg-gray-50 p-4 rounded-lg">
                       <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                        제 {rule.chapter} 장 {rule.section} 조 {rule.title}
+                        <span className="text-blue-600">{rule.chapter}장 {rule.section}조</span>
+                        <span className="mx-2">|</span>
+                        <span>{rule.title}</span>
                       </h4>
                       <p className="text-gray-700 whitespace-pre-line">{rule.content}</p>
                     </div>
@@ -998,15 +1288,17 @@ export default function GroupInfo() {
               </div>
             </div>
             
-            {/* 제 3 장 */}
+            {/* 3장 */}
             <div>
-              <h3 className="text-xl font-bold text-blue-800 mb-4 pb-2 border-b border-blue-200">제 3 장 재정</h3>
+              <h3 className="text-xl font-bold text-blue-800 mb-4 pb-2 border-b border-blue-200">3장 재정</h3>
               <div className="space-y-4">
                 {rulesData.finance.length > 0 ? (
                   rulesData.finance.map((rule) => (
                     <div key={rule.id} className="bg-gray-50 p-4 rounded-lg">
                       <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                        제 {rule.chapter} 장 {rule.section} 조 {rule.title}
+                        <span className="text-blue-600">{rule.chapter}장 {rule.section}조</span>
+                        <span className="mx-2">|</span>
+                        <span>{rule.title}</span>
                       </h4>
                       <p className="text-gray-700 whitespace-pre-line">{rule.content}</p>
                     </div>
@@ -1017,15 +1309,17 @@ export default function GroupInfo() {
               </div>
             </div>
             
-            {/* 제 4 장 */}
+            {/* 4장 */}
             <div>
-              <h3 className="text-xl font-bold text-blue-800 mb-4 pb-2 border-b border-blue-200">제 4 장 정기 모임</h3>
+              <h3 className="text-xl font-bold text-blue-800 mb-4 pb-2 border-b border-blue-200">4장 정기 모임</h3>
               <div className="space-y-4">
                 {rulesData.regular.length > 0 ? (
                   rulesData.regular.map((rule) => (
                     <div key={rule.id} className="bg-gray-50 p-4 rounded-lg">
                       <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                        제 {rule.chapter} 장 {rule.section} 조 {rule.title}
+                        <span className="text-blue-600">{rule.chapter}장 {rule.section}조</span>
+                        <span className="mx-2">|</span>
+                        <span>{rule.title}</span>
                       </h4>
                       <p className="text-gray-700 whitespace-pre-line">{rule.content}</p>
                     </div>
@@ -1036,15 +1330,17 @@ export default function GroupInfo() {
               </div>
             </div>
             
-            {/* 제 5 장 */}
+            {/* 5장 */}
             <div>
-              <h3 className="text-xl font-bold text-blue-800 mb-4 pb-2 border-b border-blue-200">제 5 장 안전</h3>
+              <h3 className="text-xl font-bold text-blue-800 mb-4 pb-2 border-b border-blue-200">5장 안전</h3>
               <div className="space-y-4">
                 {rulesData.safety.length > 0 ? (
                   rulesData.safety.map((rule) => (
                     <div key={rule.id} className="bg-gray-50 p-4 rounded-lg">
                       <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                        제 {rule.chapter} 장 {rule.section} 조 {rule.title}
+                        <span className="text-blue-600">{rule.chapter}장 {rule.section}조</span>
+                        <span className="mx-2">|</span>
+                        <span>{rule.title}</span>
                       </h4>
                       <p className="text-gray-700 whitespace-pre-line">{rule.content}</p>
                     </div>

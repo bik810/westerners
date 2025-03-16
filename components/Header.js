@@ -110,7 +110,7 @@ export default function Header() {
                 isActive('/admin/members') ? 'text-blue-600' : ''
               }`}
             >
-              <span className="relative z-10 transition-colors duration-300 group-hover:text-blue-600">회원 관리</span>
+              <span className="relative z-10 transition-colors duration-300 group-hover:text-blue-600">계정 관리</span>
               <span className={`absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full ${isActive('/admin/members') ? 'w-full' : ''}`}></span>
             </Link>
           )}
@@ -233,7 +233,7 @@ export default function Header() {
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
-              회원 관리
+              계정 관리
             </Link>
           )}
           

@@ -390,22 +390,6 @@ export default function Fees() {
             <p className="text-xl text-blue-100 max-w-3xl mx-auto">
               모임의 회비 수입과 지출을 관리하고 투명하게 공개합니다.
             </p>
-            {canEdit && (
-              <div className="mt-10 flex flex-wrap justify-center gap-4">
-                <button
-                  onClick={() => handleOpenModal('add-income')}
-                  className="px-6 py-3 bg-white text-blue-800 font-semibold rounded-lg shadow-md hover:bg-blue-50 transition-colors duration-300"
-                >
-                  회비 수입 추가
-                </button>
-                <button
-                  onClick={() => handleOpenModal('add-expense')}
-                  className="px-6 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-800 transition-colors duration-300"
-                >
-                  회비 지출 추가
-                </button>
-              </div>
-            )}
           </div>
         </section>
 
@@ -587,7 +571,7 @@ export default function Fees() {
                           {canEdit && (
                             <button
                               onClick={() => handleOpenModal('add-income')}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300"
+                              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-300"
                             >
                               회비 수입 추가
                             </button>
@@ -675,7 +659,7 @@ export default function Fees() {
                           {canEdit && (
                             <button
                               onClick={() => handleOpenModal('add-expense')}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300"
+                              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-300"
                             >
                               회비 지출 추가
                             </button>
@@ -874,7 +858,7 @@ export default function Fees() {
                 type="submit"
                 className={`px-4 py-2 text-white font-medium rounded-md ${
                   modalType.includes('income')
-                    ? 'bg-blue-600 hover:bg-blue-700'
+                    ? 'bg-green-600 hover:bg-green-700'
                     : 'bg-red-600 hover:bg-red-700'
                 }`}
               >
