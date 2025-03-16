@@ -164,6 +164,22 @@ export default function Home() {
                   <div className="flex justify-center py-6">
                     <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
                   </div>
+                ) : !currentUser ? (
+                  <div className="text-center py-8">
+                    <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                    <h3 className="text-base font-medium text-gray-600 mb-2">로그인이 필요합니다</h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                      임원단 정보를 확인하려면 로그인해주세요.
+                    </p>
+                    <Link href="/login" className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                      <span>로그인하기</span>
+                      <svg className="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                      </svg>
+                    </Link>
+                  </div>
                 ) : currentExecutive ? (
                   <div className="flex flex-col">
                     <div className="bg-blue-50 rounded-lg border-2 border-blue-100 py-2.5 px-4 mb-6 inline-flex items-center self-start">
@@ -250,6 +266,22 @@ export default function Home() {
                 {isLoading ? (
                   <div className="flex justify-center py-6">
                     <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : !currentUser ? (
+                  <div className="text-center py-8">
+                    <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                    <h3 className="text-base font-medium text-gray-600 mb-2">로그인이 필요합니다</h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                      정기모임 정보를 확인하려면 로그인해주세요.
+                    </p>
+                    <Link href="/login" className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                      <span>로그인하기</span>
+                      <svg className="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                      </svg>
+                    </Link>
                   </div>
                 ) : nextMeeting && (nextMeeting.date || nextMeeting.time || nextMeeting.location) ? (
                   <div className="flex flex-col">
