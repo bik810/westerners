@@ -20,10 +20,18 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { currentUser, isDevelopment: isDevEnv } = useAuth();
-  const { redirect } = router.query;
+  const { redirect, message: urlMessage } = router.query;
+
+  // URL에서 메시지 파라미터 확인
+  useEffect(() => {
+    if (urlMessage) {
+      setMessage(decodeURIComponent(urlMessage));
+    }
+  }, [urlMessage]);
 
   // 이미 로그인한 경우 홈 또는 원래 가려던 페이지로 리디렉션
   useEffect(() => {
@@ -46,10 +54,24 @@ export default function Login() {
     
     try {
       setError('');
+      setMessage('');
       setLoading(true);
       
       console.log(`로그인 시도: ${email} (${isDevEnv ? '개발 환경' : '프로덕션 환경'})`);
-      await loginUser(email, password);
+      
+      // 개발 환경에서 추가 디버깅
+      if (isDevEnv) {
+        console.log('개발 환경에서 로그인 시도 - 테스트 계정 확인');
+        const testAccount = testAccounts.find(acc => acc.email === email);
+        if (testAccount) {
+          console.log('테스트 계정 발견:', testAccount.role);
+        } else {
+          console.log('테스트 계정 아님');
+        }
+      }
+      
+      const result = await loginUser(email, password);
+      console.log('로그인 결과:', result);
       
       // 로그인 성공 후 리디렉션은 useEffect에서 처리됨
     } catch (error) {
@@ -57,7 +79,7 @@ export default function Login() {
       
       if (isDevelopment) {
         // 개발 환경에서는 더 자세한 오류 메시지 표시
-        setError(`로그인 오류: ${error.message}`);
+        setError(`로그인 오류: ${error.message || '알 수 없는 오류'}`);
       } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         setError('이메일 또는 비밀번호가 올바르지 않습니다.');
       } else if (error.code === 'auth/too-many-requests') {
@@ -126,6 +148,17 @@ export default function Login() {
                     ))}
                   </div>
                   <p className="mt-2 text-xs text-gray-600">* 클릭하면 자동으로 입력됩니다</p>
+                </div>
+              )}
+              
+              {message && (
+                <div className="mb-6 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg relative">
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    {message}
+                  </div>
                 </div>
               )}
               
