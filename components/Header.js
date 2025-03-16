@@ -38,15 +38,16 @@ export default function Header() {
 
   return (
     <header 
-      className={`fixed w-full z-50 transition-all duration-300 ${
+      className={`fixed w-full z-50 transition-all duration-500 ${
         scrolled 
-          ? 'bg-white text-gray-800 shadow-lg py-3' 
+          ? 'bg-white/95 backdrop-blur-sm text-gray-800 shadow-lg py-3' 
           : 'bg-transparent text-white py-5'
       }`}
     >
-      <div className="container mx-auto px-6 flex justify-between items-center">
-        <Link href="/" className="text-2xl font-bold tracking-tight">
-          <span className="text-blue-600">W</span>esterners
+      <div className="container mx-auto px-4 md:px-6 flex justify-between items-center">
+        <Link href="/" className="text-2xl font-bold tracking-tight group">
+          <span className="inline-block text-blue-600 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">W</span>
+          <span className="inline-block transition-all duration-300 group-hover:tracking-wider">esterners</span>
         </Link>
         
         {/* 데스크톱 메뉴 */}
@@ -54,22 +55,24 @@ export default function Header() {
           {/* 홈 메뉴 */}
           <Link 
             href="/" 
-            className={`font-medium hover:text-blue-600 transition-colors ${
+            className={`font-medium relative overflow-hidden group ${
               isActive('/') ? 'text-blue-600' : ''
             }`}
           >
-            홈
+            <span className="relative z-10 transition-colors duration-300 group-hover:text-blue-600">홈</span>
+            <span className={`absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full ${isActive('/') ? 'w-full' : ''}`}></span>
           </Link>
           
           {/* 모임 정보 메뉴 - 로그인한 사용자만 */}
           {currentUser && (
             <Link 
               href="/group-info" 
-              className={`font-medium hover:text-blue-600 transition-colors ${
+              className={`font-medium relative overflow-hidden group ${
                 isActive('/group-info') ? 'text-blue-600' : ''
               }`}
             >
-              모임 정보
+              <span className="relative z-10 transition-colors duration-300 group-hover:text-blue-600">모임 정보</span>
+              <span className={`absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full ${isActive('/group-info') ? 'w-full' : ''}`}></span>
             </Link>
           )}
           
@@ -77,11 +80,12 @@ export default function Header() {
           {currentUser && (
             <Link 
               href="/gallery" 
-              className={`font-medium hover:text-blue-600 transition-colors ${
+              className={`font-medium relative overflow-hidden group ${
                 isActive('/gallery') ? 'text-blue-600' : ''
               }`}
             >
-              갤러리
+              <span className="relative z-10 transition-colors duration-300 group-hover:text-blue-600">갤러리</span>
+              <span className={`absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full ${isActive('/gallery') ? 'w-full' : ''}`}></span>
             </Link>
           )}
           
@@ -89,11 +93,12 @@ export default function Header() {
           {currentUser && userProfile && (userProfile.role === 'treasurer' || userProfile.role === 'admin') && (
             <Link 
               href="/fees" 
-              className={`font-medium hover:text-blue-600 transition-colors ${
+              className={`font-medium relative overflow-hidden group ${
                 isActive('/fees') ? 'text-blue-600' : ''
               }`}
             >
-              회비 관리
+              <span className="relative z-10 transition-colors duration-300 group-hover:text-blue-600">회비 관리</span>
+              <span className={`absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full ${isActive('/fees') ? 'w-full' : ''}`}></span>
             </Link>
           )}
           
@@ -101,11 +106,12 @@ export default function Header() {
           {currentUser && userProfile && userProfile.role === 'admin' && (
             <Link 
               href="/admin/members" 
-              className={`font-medium hover:text-blue-600 transition-colors ${
+              className={`font-medium relative overflow-hidden group ${
                 isActive('/admin/members') ? 'text-blue-600' : ''
               }`}
             >
-              회원 관리
+              <span className="relative z-10 transition-colors duration-300 group-hover:text-blue-600">회원 관리</span>
+              <span className={`absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full ${isActive('/admin/members') ? 'w-full' : ''}`}></span>
             </Link>
           )}
           
@@ -115,7 +121,7 @@ export default function Header() {
               {/* 비밀번호 변경 아이콘 */}
               <Link 
                 href="/change-password" 
-                className="text-current hover:text-blue-600 transition-colors"
+                className="text-current hover:text-blue-600 transition-colors duration-300 transform hover:scale-110"
                 title="비밀번호 변경"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -125,7 +131,7 @@ export default function Header() {
               {/* 로그아웃 버튼 */}
               <button 
                 onClick={handleLogout}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
               >
                 로그아웃
               </button>
@@ -133,7 +139,7 @@ export default function Header() {
           ) : (
             <Link 
               href="/login" 
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
             >
               로그인
             </Link>
@@ -144,7 +150,7 @@ export default function Header() {
         <div className="md:hidden">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="text-current focus:outline-none"
+            className="text-current focus:outline-none transition-transform duration-300 hover:scale-110"
           >
             {mobileMenuOpen ? (
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -160,12 +166,18 @@ export default function Header() {
       </div>
       
       {/* 모바일 메뉴 */}
-      <div className={`md:hidden ${mobileMenuOpen ? 'block' : 'hidden'}`}>
-        <div className="px-6 py-4 bg-white border-t border-gray-200">
+      <div 
+        className={`md:hidden transition-all duration-300 ease-in-out ${
+          mobileMenuOpen 
+            ? 'max-h-screen opacity-100 visible' 
+            : 'max-h-0 opacity-0 invisible'
+        }`}
+      >
+        <div className="px-6 py-4 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-lg">
           {/* 홈 메뉴 */}
           <Link 
             href="/" 
-            className={`block py-2 font-medium hover:text-blue-600 transition-colors ${
+            className={`block py-3 font-medium hover:text-blue-600 transition-all duration-300 transform hover:translate-x-2 ${
               isActive('/') ? 'text-blue-600' : 'text-gray-800'
             }`}
             onClick={() => setMobileMenuOpen(false)}
@@ -177,7 +189,7 @@ export default function Header() {
           {currentUser && (
             <Link 
               href="/group-info" 
-              className={`block py-2 font-medium hover:text-blue-600 transition-colors ${
+              className={`block py-3 font-medium hover:text-blue-600 transition-all duration-300 transform hover:translate-x-2 ${
                 isActive('/group-info') ? 'text-blue-600' : 'text-gray-800'
               }`}
               onClick={() => setMobileMenuOpen(false)}
@@ -190,7 +202,7 @@ export default function Header() {
           {currentUser && (
             <Link 
               href="/gallery" 
-              className={`block py-2 font-medium hover:text-blue-600 transition-colors ${
+              className={`block py-3 font-medium hover:text-blue-600 transition-all duration-300 transform hover:translate-x-2 ${
                 isActive('/gallery') ? 'text-blue-600' : 'text-gray-800'
               }`}
               onClick={() => setMobileMenuOpen(false)}
@@ -203,7 +215,7 @@ export default function Header() {
           {currentUser && userProfile && (userProfile.role === 'treasurer' || userProfile.role === 'admin') && (
             <Link 
               href="/fees" 
-              className={`block py-2 font-medium hover:text-blue-600 transition-colors ${
+              className={`block py-3 font-medium hover:text-blue-600 transition-all duration-300 transform hover:translate-x-2 ${
                 isActive('/fees') ? 'text-blue-600' : 'text-gray-800'
               }`}
               onClick={() => setMobileMenuOpen(false)}
@@ -216,7 +228,7 @@ export default function Header() {
           {currentUser && userProfile && userProfile.role === 'admin' && (
             <Link 
               href="/admin/members" 
-              className={`block py-2 font-medium hover:text-blue-600 transition-colors ${
+              className={`block py-3 font-medium hover:text-blue-600 transition-all duration-300 transform hover:translate-x-2 ${
                 isActive('/admin/members') ? 'text-blue-600' : 'text-gray-800'
               }`}
               onClick={() => setMobileMenuOpen(false)}
@@ -227,10 +239,10 @@ export default function Header() {
           
           {/* 로그인/로그아웃 및 비밀번호 변경 */}
           {currentUser ? (
-            <div className="py-2 flex flex-col space-y-2">
+            <div className="py-3 flex flex-col space-y-3">
               <Link 
                 href="/change-password" 
-                className="flex items-center text-gray-800 hover:text-blue-600 transition-colors"
+                className="flex items-center text-gray-800 hover:text-blue-600 transition-all duration-300 transform hover:translate-x-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -243,19 +255,21 @@ export default function Header() {
                   handleLogout();
                   setMobileMenuOpen(false);
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
               >
                 로그아웃
               </button>
             </div>
           ) : (
-            <Link 
-              href="/login" 
-              className="block py-2 bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-md transition-colors mt-2"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              로그인
-            </Link>
+            <div className="py-3">
+              <Link 
+                href="/login" 
+                className="block w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-full text-center transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                로그인
+              </Link>
+            </div>
           )}
         </div>
       </div>
