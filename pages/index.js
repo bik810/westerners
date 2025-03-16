@@ -323,13 +323,9 @@ export default function Home() {
               모임 소개
               <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-20 md:w-32 h-1 bg-blue-600"></span>
             </h2>
-            <p className="text-gray-600 max-w-3xl mx-auto mt-6 text-base md:text-lg">
-              Westerners는 싱가포르에서 함께 일하고 생활하는 한국인들의 커뮤니티입니다.
-              서로의 경험과 지식을 나누며 더 나은 싱가포르 생활을 만들어갑니다.
-            </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 max-w-4xl mx-auto">
             <div className="bg-white rounded-xl shadow-xl overflow-hidden transform transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 group">
               <div className="h-2 md:h-3 bg-gradient-to-r from-blue-500 to-blue-700"></div>
               <div className="p-6 md:p-8">
@@ -358,23 +354,6 @@ export default function Home() {
                   정기적인 모임을 통해 서로의 일상을 나누고 친목을 다집니다.
                   싱가포르 생활 정보 공유, 함께하는 식사 모임, 특별 행사 등 다양한 활동으로 
                   타국에서도 가족 같은 따뜻함을 느낄 수 있는 시간을 만들어갑니다.
-                </p>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl shadow-xl overflow-hidden transform transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 group">
-              <div className="h-2 md:h-3 bg-gradient-to-r from-blue-500 to-blue-700"></div>
-              <div className="p-6 md:p-8">
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-6 md:mb-8 mx-auto transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
-                  <svg className="w-8 h-8 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                  </svg>
-                </div>
-                <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-5 text-center">우리의 가치</h3>
-                <p className="text-gray-600 text-sm md:text-base leading-relaxed text-center">
-                  서로를 존중하고 배려하는 마음으로 진정한 우정을 나눕니다.
-                  국적과 나이를 초월한 다양한 경험과 지혜를 공유하며,
-                  싱가포르에서의 삶이 더욱 풍요롭고 의미 있게 만들어 갑니다.
                 </p>
               </div>
             </div>
