@@ -23,10 +23,16 @@ export default function Home() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        console.log('데이터 로딩 시작...');
+        
         const [meetingData, executiveData] = await Promise.all([
           getNextMeeting(),
           getCurrentExecutive()
         ]);
+        
+        console.log('정기모임 데이터:', meetingData);
+        console.log('임원단 데이터:', executiveData);
+        
         setNextMeeting(meetingData);
         setCurrentExecutive(executiveData);
       } catch (err) {
@@ -41,6 +47,7 @@ export default function Home() {
   
   // 정기모임 정보 업데이트 처리
   const handleMeetingUpdate = (updatedMeeting) => {
+    console.log('정기모임 정보 업데이트:', updatedMeeting);
     setNextMeeting(updatedMeeting);
   };
 

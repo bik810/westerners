@@ -59,12 +59,21 @@ export default function MeetingEditModal({ isOpen, onClose, currentMeeting, onUp
         throw new Error('장소를 입력해주세요.');
       }
       
+      console.log('정기모임 정보 업데이트 시작:', formData);
+      
       // Firestore에 정기모임 정보 업데이트
       await updateNextMeeting(formData);
       
+      console.log('정기모임 정보 업데이트 완료');
+      
       // 부모 컴포넌트에 업데이트 알림
       if (onUpdate) {
-        onUpdate(formData);
+        // 업데이트된 데이터를 전달
+        const updatedMeeting = {
+          ...formData,
+          lastUpdated: new Date().toISOString()
+        };
+        onUpdate(updatedMeeting);
       }
       
       // 모달 닫기
