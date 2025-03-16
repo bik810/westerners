@@ -61,15 +61,15 @@ export default function Header() {
             홈
           </Link>
           
-          {/* 회칙 메뉴 - 로그인한 사용자만 */}
+          {/* 모임 정보 메뉴 - 로그인한 사용자만 */}
           {currentUser && (
             <Link 
-              href="/rules" 
+              href="/group-info" 
               className={`font-medium hover:text-blue-600 transition-colors ${
-                isActive('/rules') ? 'text-blue-600' : ''
+                isActive('/group-info') ? 'text-blue-600' : ''
               }`}
             >
-              회칙
+              모임 정보
             </Link>
           )}
           
@@ -173,16 +173,16 @@ export default function Header() {
             홈
           </Link>
           
-          {/* 회칙 메뉴 - 로그인한 사용자만 */}
+          {/* 모임 정보 메뉴 - 로그인한 사용자만 */}
           {currentUser && (
             <Link 
-              href="/rules" 
+              href="/group-info" 
               className={`block py-2 font-medium hover:text-blue-600 transition-colors ${
-                isActive('/rules') ? 'text-blue-600' : 'text-gray-800'
+                isActive('/group-info') ? 'text-blue-600' : 'text-gray-800'
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
-              회칙
+              모임 정보
             </Link>
           )}
           
