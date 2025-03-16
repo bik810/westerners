@@ -812,12 +812,12 @@ export default function GroupInfo() {
                   {/* 회칙 탭 */}
                   {activeTab === 'rules' && (
                     <div className="animate-fadeIn">
-                      <div className="flex justify-between items-center mb-6">
+                      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-3">
                         <h3 className="text-xl font-bold text-gray-800">Westerners 회칙</h3>
-                        <div className="flex space-x-2">
+                        <div className="flex w-full sm:w-auto justify-center gap-3">
                           <button 
                             onClick={handleOpenRulesModal}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+                            className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
                           >
                             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -828,7 +828,7 @@ export default function GroupInfo() {
                           {canEdit && (
                             <button
                               onClick={() => handleOpenRuleEditModal()}
-                              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center"
+                              className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
                             >
                               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
