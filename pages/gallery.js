@@ -51,7 +51,14 @@ export default function Gallery() {
           };
         });
         
-        setPhotos(photosData);
+        // 날짜 기준 내림차순 정렬 (최신순)
+        const sortedPhotos = photosData.sort((a, b) => {
+          const dateA = new Date(a.date.replace(/\//g, '-'));
+          const dateB = new Date(b.date.replace(/\//g, '-'));
+          return dateB - dateA;
+        });
+        
+        setPhotos(sortedPhotos);
         setError(null);
       } catch (err) {
         console.error('사진 데이터 로드 중 오류 발생:', err);
@@ -181,26 +188,42 @@ export default function Gallery() {
           await setDoc(doc(db, 'gallery', selectedPhoto.id), photoData, { merge: true });
           console.log('Firestore 문서 업데이트 완료, 문서 ID:', selectedPhoto.id);
           
-          // 상태 업데이트
-          setPhotos(prevPhotos => prevPhotos.map(p => 
-            p.id === selectedPhoto.id 
-              ? { id: selectedPhoto.id, ...photoData, imageUrl: compressedImage }
-              : p
-          ));
+          // 상태 업데이트 (날짜 기준 정렬 유지)
+          setPhotos(prevPhotos => {
+            const updatedPhotos = prevPhotos.map(p => 
+              p.id === selectedPhoto.id 
+                ? { id: selectedPhoto.id, ...photoData, imageUrl: compressedImage }
+                : p
+            );
+            // 날짜 기준 내림차순 정렬
+            return updatedPhotos.sort((a, b) => {
+              const dateA = new Date(a.date.replace(/\//g, '-'));
+              const dateB = new Date(b.date.replace(/\//g, '-'));
+              return dateB - dateA;
+            });
+          });
         } else {
           // 새 문서 추가
           const docRef = await addDoc(collection(db, 'gallery'), photoData);
           console.log('Firestore에 저장 완료, 문서 ID:', docRef.id);
           
-          // 상태 업데이트
-          setPhotos(prevPhotos => [
-            {
-              id: docRef.id,
-              ...photoData,
-              imageUrl: compressedImage // 이미지 URL 대신 압축된 Base64 데이터 사용
-            },
-            ...prevPhotos
-          ]);
+          // 상태 업데이트 (날짜 기준 정렬 유지)
+          setPhotos(prevPhotos => {
+            const newPhotos = [
+              {
+                id: docRef.id,
+                ...photoData,
+                imageUrl: compressedImage // 이미지 URL 대신 압축된 Base64 데이터 사용
+              },
+              ...prevPhotos
+            ];
+            // 날짜 기준 내림차순 정렬
+            return newPhotos.sort((a, b) => {
+              const dateA = new Date(a.date.replace(/\//g, '-'));
+              const dateB = new Date(b.date.replace(/\//g, '-'));
+              return dateB - dateA;
+            });
+          });
         }
         
         setUploadProgress(100);
@@ -646,7 +669,7 @@ export default function Gallery() {
                       }}
                       className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors whitespace-nowrap"
                     >
-                      오늘 날짜
+                      오늘
                     </button>
                   </div>
                   <p className="mt-1 text-xs text-gray-500">예: 2023/12/25</p>

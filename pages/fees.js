@@ -36,8 +36,16 @@ export default function Fees() {
       const membersData = await getAllMembers();
       const expensesData = await getAllExpenses();
       
-      setMembers(membersData);
-      setExpenses(expensesData);
+      // 날짜 기준 내림차순 정렬 (최신순)
+      const sortByDateDesc = (a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateB - dateA;
+      };
+      
+      // 정렬된 데이터 설정
+      setMembers(membersData.sort(sortByDateDesc));
+      setExpenses(expensesData.sort(sortByDateDesc));
       setError(null);
     } catch (err) {
       console.error('데이터 로드 중 오류 발생:', err);
@@ -233,51 +241,135 @@ export default function Fees() {
   // 폼 제출 처리
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     try {
-      const data = {
-        date: formData.date,
-        amount: Number(formData.amount),
-        note: formData.remarks
-      };
-
-      if (modalType.includes('income')) {
-        data.name = formData.details;
-        if (modalType === 'add-income') {
-          await addMember(data);
-        } else {
-          await updateMember(selectedItem.id, data);
-        }
-      } else {
-        data.description = formData.details;
-        if (modalType === 'add-expense') {
-          await addExpense(data);
-        } else {
-          await updateExpense(selectedItem.id, data);
-        }
+      setIsLoading(true);
+      
+      // 입력 검증
+      if (!formData.date.trim()) {
+        throw new Error('날짜를 입력해주세요.');
       }
-
-      await loadData();
-      handleCloseModal();
+      
+      if (!formData.details.trim()) {
+        throw new Error(modalType.includes('income') ? '이름을 입력해주세요.' : '내역을 입력해주세요.');
+      }
+      
+      if (!formData.amount.trim() || isNaN(parseFloat(formData.amount))) {
+        throw new Error('유효한 금액을 입력해주세요.');
+      }
+      
+      // 날짜 형식 변환 (YYYY/MM/DD -> YYYY-MM-DD)
+      const formattedDate = formData.date.replace(/\//g, '-');
+      
+      // 데이터 준비
+      const amount = parseFloat(formData.amount);
+      
+      if (modalType === 'add-income') {
+        // 수입 추가
+        const newMember = {
+          name: formData.details,
+          amount: amount,
+          date: formattedDate,
+          note: formData.remarks
+        };
+        
+        const docRef = await addMember(newMember);
+        
+        // 상태 업데이트 (날짜 기준 정렬 유지)
+        const newMemberWithId = { id: docRef.id, ...newMember };
+        setMembers(prev => [newMemberWithId, ...prev].sort((a, b) => new Date(b.date) - new Date(a.date)));
+        
+      } else if (modalType === 'edit-income') {
+        // 수입 수정
+        const updatedMember = {
+          name: formData.details,
+          amount: amount,
+          date: formattedDate,
+          note: formData.remarks
+        };
+        
+        await updateMember(selectedItem.id, updatedMember);
+        
+        // 상태 업데이트 (날짜 기준 정렬 유지)
+        setMembers(prev => 
+          prev.map(item => item.id === selectedItem.id ? { id: selectedItem.id, ...updatedMember } : item)
+             .sort((a, b) => new Date(b.date) - new Date(a.date))
+        );
+        
+      } else if (modalType === 'add-expense') {
+        // 지출 추가
+        const newExpense = {
+          description: formData.details,
+          amount: amount,
+          date: formattedDate,
+          note: formData.remarks
+        };
+        
+        const docRef = await addExpense(newExpense);
+        
+        // 상태 업데이트 (날짜 기준 정렬 유지)
+        const newExpenseWithId = { id: docRef.id, ...newExpense };
+        setExpenses(prev => [newExpenseWithId, ...prev].sort((a, b) => new Date(b.date) - new Date(a.date)));
+        
+      } else if (modalType === 'edit-expense') {
+        // 지출 수정
+        const updatedExpense = {
+          description: formData.details,
+          amount: amount,
+          date: formattedDate,
+          note: formData.remarks
+        };
+        
+        await updateExpense(selectedItem.id, updatedExpense);
+        
+        // 상태 업데이트 (날짜 기준 정렬 유지)
+        setExpenses(prev => 
+          prev.map(item => item.id === selectedItem.id ? { id: selectedItem.id, ...updatedExpense } : item)
+             .sort((a, b) => new Date(b.date) - new Date(a.date))
+        );
+      }
+      
+      // 모달 닫기
+      setIsModalOpen(false);
+      setModalType('');
+      setSelectedItem(null);
+      setFormData({
+        date: '',
+        details: '',
+        amount: '',
+        remarks: ''
+      });
+      
     } catch (err) {
-      console.error('데이터 처리 중 오류 발생:', err);
-      setError('데이터를 처리하는 중 오류가 발생했습니다.');
+      console.error('폼 제출 중 오류 발생:', err);
+      alert(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // 삭제 처리
   const handleDelete = async (type, id) => {
-    if (!window.confirm('정말로 이 항목을 삭제하시겠습니까?')) return;
+    if (!confirm(`정말로 이 ${type === 'income' ? '수입' : '지출'} 내역을 삭제하시겠습니까?`)) {
+      return;
+    }
     
     try {
+      setIsLoading(true);
+      
       if (type === 'income') {
         await deleteMember(id);
+        setMembers(prev => prev.filter(item => item.id !== id));
       } else {
         await deleteExpense(id);
+        setExpenses(prev => prev.filter(item => item.id !== id));
       }
-      await loadData();
+      
     } catch (err) {
       console.error('삭제 중 오류 발생:', err);
-      setError('항목을 삭제하는 중 오류가 발생했습니다.');
+      alert(`삭제 중 오류가 발생했습니다: ${err.message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -712,7 +804,7 @@ export default function Fees() {
                   }}
                   className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors whitespace-nowrap"
                 >
-                  오늘 날짜
+                  오늘
                 </button>
               </div>
               <div className="text-xs text-gray-500 mt-1">
