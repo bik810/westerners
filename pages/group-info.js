@@ -6,7 +6,7 @@ import Footer from '../components/Footer';
 import Modal from '../components/Modal';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { db } from '../lib/firebase';
-import { collection, doc, getDoc, setDoc, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, getDocs, query, orderBy, where, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../lib/authContext';
 
 export default function GroupInfo() {
@@ -16,6 +16,15 @@ export default function GroupInfo() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [members, setMembers] = useState([]);
+  const [executives, setExecutives] = useState([]);
+  const [isExecutiveModalOpen, setIsExecutiveModalOpen] = useState(false);
+  const [selectedExecutive, setSelectedExecutive] = useState(null);
+  const [executiveFormData, setExecutiveFormData] = useState({
+    generation: '',
+    president: '',
+    treasurer: '',
+    term: ''
+  });
   const [rulesData, setRulesData] = useState({
     general: [],
     members: [],
@@ -40,7 +49,7 @@ export default function GroupInfo() {
 
   // 회원 데이터 불러오기
   useEffect(() => {
-    const fetchMembers = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
         
@@ -51,9 +60,23 @@ export default function GroupInfo() {
         const membersData = membersSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
+        })).filter(member => !member.deleted); // 삭제된 회원 필터링
+        
+        // 회원 정렬: 회장 > 총무 > 일반회원(나이 내림차순, 이름 오름차순)
+        const sortedMembers = sortMembers(membersData);
+        
+        setMembers(sortedMembers);
+        
+        // 임원단 정보 가져오기
+        const executivesQuery = query(collection(db, 'executives'), orderBy('generation', 'desc'));
+        const executivesSnapshot = await getDocs(executivesQuery);
+        
+        const executivesData = executivesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
         }));
         
-        setMembers(membersData);
+        setExecutives(executivesData);
         
         // 회칙 정보 가져오기
         const rulesRef = doc(db, 'settings', 'rules');
@@ -72,8 +95,40 @@ export default function GroupInfo() {
       }
     };
     
-    fetchMembers();
+    fetchData();
   }, []);
+
+  // 회원 정렬 함수
+  const sortMembers = (members) => {
+    return [...members].sort((a, b) => {
+      // 역할 우선순위: 회장(president) > 총무(treasurer) > 일반회원(member)
+      const roleOrder = { president: 1, treasurer: 2, member: 3, admin: 4 };
+      const roleA = roleOrder[a.role] || 999;
+      const roleB = roleOrder[b.role] || 999;
+      
+      // 역할이 다르면 역할 순서대로 정렬
+      if (roleA !== roleB) {
+        return roleA - roleB;
+      }
+      
+      // 역할이 같고 일반회원인 경우
+      if (roleA === 3) {
+        // 나이가 있는 경우 나이 내림차순 (나이 많은 순)
+        const ageA = parseInt(a.age) || 0;
+        const ageB = parseInt(b.age) || 0;
+        
+        if (ageA !== ageB) {
+          return ageB - ageA;
+        }
+        
+        // 나이가 같으면 이름 가나다순
+        return (a.name || '').localeCompare(b.name || '', 'ko');
+      }
+      
+      // 그 외의 경우 이름 가나다순
+      return (a.name || '').localeCompare(b.name || '', 'ko');
+    });
+  };
 
   // 모달 열기 함수
   const handleOpenModal = (member = null) => {
@@ -140,10 +195,13 @@ export default function GroupInfo() {
         // 기존 회원 정보 수정
         await setDoc(doc(db, 'memberInfo', selectedMember.id), memberData, { merge: true });
         
-        // 상태 업데이트
-        setMembers(prev => prev.map(m => 
-          m.id === selectedMember.id ? { id: selectedMember.id, ...memberData } : m
-        ));
+        // 상태 업데이트 (정렬 적용)
+        setMembers(prev => {
+          const updated = prev.map(m => 
+            m.id === selectedMember.id ? { id: selectedMember.id, ...memberData } : m
+          );
+          return sortMembers(updated);
+        });
       } else {
         // 새 회원 정보 추가
         const newDocRef = doc(collection(db, 'memberInfo'));
@@ -152,8 +210,15 @@ export default function GroupInfo() {
           createdAt: new Date().toISOString()
         });
         
-        // 상태 업데이트
-        setMembers(prev => [...prev, { id: newDocRef.id, ...memberData, createdAt: new Date().toISOString() }]);
+        // 상태 업데이트 (정렬 적용)
+        setMembers(prev => {
+          const newMember = { 
+            id: newDocRef.id, 
+            ...memberData, 
+            createdAt: new Date().toISOString() 
+          };
+          return sortMembers([...prev, newMember]);
+        });
       }
       
       handleCloseModal();
@@ -210,6 +275,119 @@ export default function GroupInfo() {
     }
   };
 
+  // 임원단 모달 열기 함수
+  const handleOpenExecutiveModal = (executive = null) => {
+    setSelectedExecutive(executive);
+    
+    if (executive) {
+      setExecutiveFormData({
+        generation: executive.generation || '',
+        president: executive.president || '',
+        treasurer: executive.treasurer || '',
+        term: executive.term || ''
+      });
+    } else {
+      setExecutiveFormData({
+        generation: '',
+        president: '',
+        treasurer: '',
+        term: ''
+      });
+    }
+    
+    setIsExecutiveModalOpen(true);
+  };
+
+  // 임원단 모달 닫기 함수
+  const handleCloseExecutiveModal = () => {
+    setIsExecutiveModalOpen(false);
+    setSelectedExecutive(null);
+    setExecutiveFormData({
+      generation: '',
+      president: '',
+      treasurer: '',
+      term: ''
+    });
+  };
+
+  // 임원단 폼 데이터 변경 처리
+  const handleExecutiveFormChange = (e) => {
+    const { name, value } = e.target;
+    setExecutiveFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // 임원단 폼 제출 처리
+  const handleExecutiveSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const executiveData = {
+        generation: executiveFormData.generation,
+        president: executiveFormData.president,
+        treasurer: executiveFormData.treasurer,
+        term: executiveFormData.term,
+        updatedAt: new Date().toISOString()
+      };
+      
+      if (selectedExecutive) {
+        // 기존 임원단 정보 수정
+        await setDoc(doc(db, 'executives', selectedExecutive.id), executiveData, { merge: true });
+        
+        // 상태 업데이트
+        setExecutives(prev => {
+          const updated = prev.map(e => 
+            e.id === selectedExecutive.id ? { id: selectedExecutive.id, ...executiveData } : e
+          );
+          return updated.sort((a, b) => parseInt(b.generation) - parseInt(a.generation));
+        });
+      } else {
+        // 새 임원단 정보 추가
+        const newDocRef = doc(collection(db, 'executives'));
+        await setDoc(newDocRef, {
+          ...executiveData,
+          createdAt: new Date().toISOString()
+        });
+        
+        // 상태 업데이트
+        setExecutives(prev => {
+          const newExecutive = { 
+            id: newDocRef.id, 
+            ...executiveData, 
+            createdAt: new Date().toISOString() 
+          };
+          return [newExecutive, ...prev].sort((a, b) => parseInt(b.generation) - parseInt(a.generation));
+        });
+      }
+      
+      handleCloseExecutiveModal();
+      alert(selectedExecutive ? '임원단 정보가 수정되었습니다.' : '임원단 정보가 추가되었습니다.');
+    } catch (err) {
+      console.error('임원단 정보 저장 중 오류 발생:', err);
+      alert('임원단 정보를 저장하는 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 임원단 삭제 처리
+  const handleDeleteExecutive = async (executiveId) => {
+    if (!confirm('정말로 이 임원단 정보를 삭제하시겠습니까?')) return;
+    
+    try {
+      // Firestore에서 문서 삭제
+      await deleteDoc(doc(db, 'executives', executiveId));
+      
+      // 상태 업데이트
+      setExecutives(prev => prev.filter(e => e.id !== executiveId));
+      
+      alert('임원단 정보가 삭제되었습니다.');
+    } catch (err) {
+      console.error('임원단 정보 삭제 중 오류 발생:', err);
+      alert('임원단 정보를 삭제하는 중 오류가 발생했습니다.');
+    }
+  };
+
   return (
     <ProtectedRoute>
       <div className="flex flex-col min-h-screen">
@@ -257,6 +435,16 @@ export default function GroupInfo() {
                     }`}
                   >
                     회원 정보
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('executives')}
+                    className={`px-6 py-4 text-sm font-medium transition-colors duration-300 ${
+                      activeTab === 'executives'
+                        ? 'text-blue-600 border-b-2 border-blue-600'
+                        : 'text-gray-500 hover:text-blue-600'
+                    }`}
+                  >
+                    임원단
                   </button>
                   <button
                     onClick={() => setActiveTab('rules')}
@@ -362,6 +550,105 @@ export default function GroupInfo() {
                         ) : (
                           <div className="text-center py-8 text-gray-500">
                             등록된 회원 정보가 없습니다.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 임원단 탭 */}
+                  {activeTab === 'executives' && (
+                    <div className="animate-fadeIn">
+                      <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold text-gray-800">임원단 정보</h3>
+                        {canEdit && (
+                          <button
+                            onClick={() => handleOpenExecutiveModal()}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+                          >
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            임원단 정보 추가
+                          </button>
+                        )}
+                      </div>
+                      
+                      <div className="overflow-x-auto">
+                        {executives.length > 0 ? (
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead>
+                              <tr>
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  세대
+                                </th>
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  회장
+                                </th>
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  총무
+                                </th>
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  임기
+                                </th>
+                                {canEdit && (
+                                  <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    관리
+                                  </th>
+                                )}
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {executives.map((executive, index) => (
+                                <tr 
+                                  key={executive.id} 
+                                  className={`hover:bg-gray-50 transition-colors duration-200 ${
+                                    index === 0 ? 'bg-blue-50' : ''
+                                  }`}
+                                >
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    {index === 0 ? (
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        현재 {executive.generation}대
+                                      </span>
+                                    ) : (
+                                      `${executive.generation}대`
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    {executive.president}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    {executive.treasurer}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    {executive.term}
+                                  </td>
+                                  {canEdit && (
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                      <div className="flex space-x-2">
+                                        <button
+                                          onClick={() => handleOpenExecutiveModal(executive)}
+                                          className="text-blue-600 hover:text-blue-800"
+                                        >
+                                          수정
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteExecutive(executive.id)}
+                                          className="text-red-600 hover:text-red-800"
+                                        >
+                                          삭제
+                                        </button>
+                                      </div>
+                                    </td>
+                                  )}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <div className="text-center py-8 text-gray-500">
+                            등록된 임원단 정보가 없습니다.
                           </div>
                         )}
                       </div>
@@ -558,6 +845,93 @@ export default function GroupInfo() {
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md"
               >
                 {selectedMember ? '수정' : '추가'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* 임원단 모달 */}
+        <Modal
+          isOpen={isExecutiveModalOpen}
+          onClose={handleCloseExecutiveModal}
+          title={selectedExecutive ? '임원단 정보 수정' : '임원단 정보 추가'}
+        >
+          <form onSubmit={handleExecutiveSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="generation" className="block text-sm font-medium text-gray-700 mb-1">
+                세대
+              </label>
+              <input
+                type="text"
+                id="generation"
+                name="generation"
+                value={executiveFormData.generation}
+                onChange={handleExecutiveFormChange}
+                placeholder="예: 7"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="president" className="block text-sm font-medium text-gray-700 mb-1">
+                회장
+              </label>
+              <input
+                type="text"
+                id="president"
+                name="president"
+                value={executiveFormData.president}
+                onChange={handleExecutiveFormChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="treasurer" className="block text-sm font-medium text-gray-700 mb-1">
+                총무
+              </label>
+              <input
+                type="text"
+                id="treasurer"
+                name="treasurer"
+                value={executiveFormData.treasurer}
+                onChange={handleExecutiveFormChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="term" className="block text-sm font-medium text-gray-700 mb-1">
+                임기
+              </label>
+              <input
+                type="text"
+                id="term"
+                name="term"
+                value={executiveFormData.term}
+                onChange={handleExecutiveFormChange}
+                placeholder="예: 2024년 12월 - 2025년 5월"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={handleCloseExecutiveModal}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+              >
+                취소
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md"
+              >
+                {selectedExecutive ? '수정' : '추가'}
               </button>
             </div>
           </form>
