@@ -5,40 +5,39 @@ import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useAuth } from '../lib/authContext';
-import { db } from '../lib/firebase';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { getNextMeeting } from '../lib/firestoreService';
+import MeetingEditModal from '../components/MeetingEditModal';
 
 export default function Home() {
-  const [recentPhotos, setRecentPhotos] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const { currentUser, userProfile } = useAuth();
-
-  // 최근 갤러리 사진 가져오기
+  const [nextMeeting, setNextMeeting] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
+  // 권한 확인 함수
+  const canEdit = userProfile && (userProfile.role === 'admin' || userProfile.role === 'treasurer');
+  
+  // 정기모임 정보 가져오기
   useEffect(() => {
-    const fetchRecentPhotos = async () => {
+    const fetchNextMeeting = async () => {
       try {
-        const photosQuery = query(
-          collection(db, 'gallery'), 
-          orderBy('date', 'desc'), 
-          limit(4)
-        );
-        const photosSnapshot = await getDocs(photosQuery);
-        
-        const photosData = photosSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        
-        setRecentPhotos(photosData);
+        setIsLoading(true);
+        const meetingData = await getNextMeeting();
+        setNextMeeting(meetingData);
       } catch (err) {
-        console.error('최근 사진 로드 중 오류 발생:', err);
+        console.error('정기모임 정보 로드 중 오류:', err);
       } finally {
         setIsLoading(false);
       }
     };
     
-    fetchRecentPhotos();
+    fetchNextMeeting();
   }, []);
+  
+  // 정기모임 정보 업데이트 처리
+  const handleMeetingUpdate = (updatedMeeting) => {
+    setNextMeeting(updatedMeeting);
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -93,11 +92,102 @@ export default function Home() {
           </div>
         </div>
         <div className="absolute bottom-10 left-0 right-0 flex justify-center">
-          <a href="#about" className="animate-bounce text-white">
+          <a href="#next-meeting" className="animate-bounce text-white">
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
             </svg>
           </a>
+        </div>
+      </section>
+
+      {/* 다음 정기모임 섹션 */}
+      <section id="next-meeting" className="py-16 bg-gradient-to-r from-blue-50 to-blue-100">
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div className="bg-blue-600 py-6 px-8 text-white flex justify-between items-center">
+              <h2 className="text-2xl md:text-3xl font-bold">다음 정기모임 안내</h2>
+              {canEdit && (
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="bg-white text-blue-600 hover:bg-blue-50 font-medium py-2 px-4 rounded-lg transition-colors text-sm flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                  </svg>
+                  수정
+                </button>
+              )}
+            </div>
+            
+            <div className="p-8">
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+              ) : nextMeeting && (nextMeeting.date || nextMeeting.time || nextMeeting.location) ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="flex items-center justify-center">
+                    <div className="w-full max-w-xs aspect-square bg-blue-50 rounded-full flex flex-col items-center justify-center p-8 border-8 border-blue-100">
+                      <span className="text-blue-800 text-lg font-medium">제</span>
+                      <span className="text-blue-600 text-6xl font-bold my-2">{nextMeeting.meetingNumber}</span>
+                      <span className="text-blue-800 text-lg font-medium">차</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col justify-center space-y-6">
+                    <div className="flex items-start">
+                      <div className="bg-blue-100 p-2 rounded-full mr-4">
+                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-gray-500 text-sm font-medium">날짜</h3>
+                        <p className="text-gray-800 text-xl font-bold">{nextMeeting.date || '미정'}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start">
+                      <div className="bg-blue-100 p-2 rounded-full mr-4">
+                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-gray-500 text-sm font-medium">시간</h3>
+                        <p className="text-gray-800 text-xl font-bold">{nextMeeting.time || '미정'}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start">
+                      <div className="bg-blue-100 p-2 rounded-full mr-4">
+                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-gray-500 text-sm font-medium">장소</h3>
+                        <p className="text-gray-800 text-xl font-bold">{nextMeeting.location || '미정'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                  <h3 className="text-xl font-medium text-gray-600 mb-2">다음 정기모임 정보가 없습니다</h3>
+                  {canEdit && (
+                    <p className="text-gray-500">
+                      '수정' 버튼을 클릭하여 다음 정기모임 정보를 입력해주세요.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -162,54 +252,15 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 최근 갤러리 섹션 - 로그인한 사용자만 */}
-      {currentUser && (
-        <section className="py-20 bg-blue-600 text-white">
-          <div className="container mx-auto px-6">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">최근 갤러리</h2>
-              <div className="w-24 h-1 bg-white mx-auto"></div>
-            </div>
-            
-            {isLoading ? (
-              <div className="flex justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
-              </div>
-            ) : recentPhotos.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {recentPhotos.map((photo) => (
-                  <Link href="/gallery" key={photo.id} className="block">
-                    <div className="bg-white rounded-lg overflow-hidden shadow-lg transform transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
-                      <div className="relative h-48 w-full">
-                        <Image 
-                          src={photo.imageUrl} 
-                          alt={photo.title} 
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="p-4 bg-white text-gray-800">
-                        <h3 className="font-bold text-lg mb-1 truncate">{photo.title}</h3>
-                        <p className="text-sm text-gray-600">{photo.date}</p>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-xl">아직 갤러리에 사진이 없습니다.</p>
-            )}
-            
-            <div className="text-center mt-10">
-              <Link href="/gallery" className="bg-white text-blue-600 hover:bg-blue-50 font-semibold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg inline-block">
-                갤러리 더 보기
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
-
       <Footer />
+      
+      {/* 정기모임 정보 수정 모달 */}
+      <MeetingEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        currentMeeting={nextMeeting}
+        onUpdate={handleMeetingUpdate}
+      />
     </div>
   );
 }
