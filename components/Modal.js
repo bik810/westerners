@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-export default function Modal({ isOpen, onClose, title, children }) {
+export default function Modal({ isOpen, onClose, title, children, size = 'md' }) {
   const modalRef = useRef(null);
 
   // ESC 키를 누르면 모달 닫기
@@ -35,13 +35,29 @@ export default function Modal({ isOpen, onClose, title, children }) {
     };
   }, [isOpen, onClose]);
 
+  // 모달 크기에 따른 클래스 결정
+  const getSizeClass = () => {
+    switch (size) {
+      case 'sm':
+        return 'max-w-sm';
+      case 'md':
+        return 'max-w-md';
+      case 'lg':
+        return 'max-w-2xl';
+      case 'xl':
+        return 'max-w-4xl';
+      default:
+        return 'max-w-md';
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm transition-opacity">
       <div 
         ref={modalRef}
-        className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden transform transition-all"
+        className={`bg-white rounded-lg shadow-xl w-full ${getSizeClass()} mx-4 overflow-hidden transform transition-all`}
       >
         {title && (
           <div className="flex justify-between items-center px-6 py-4 border-b">
