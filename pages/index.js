@@ -140,7 +140,7 @@ export default function Home() {
       </section>
 
       {/* 다음 정기모임 섹션 */}
-      <section id="next-meeting" className="py-16 md:py-20 bg-gradient-to-r from-blue-50 via-white to-blue-50">
+      <section id="next-meeting" className="py-16 md:py-20 bg-gradient-to-r from-blue-100 via-blue-50 to-blue-100">
         <div className="container mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
             {/* 임원단 카드 */}
@@ -350,13 +350,6 @@ export default function Home() {
       {/* About Section */}
       <section id="about" className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-2xl md:text-4xl font-bold text-gray-800 mb-4 md:mb-5 relative inline-block">
-              모임 소개
-              <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-20 md:w-32 h-1 bg-blue-600"></span>
-            </h2>
-          </div>
-          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 max-w-4xl mx-auto">
             <div className="bg-white rounded-xl shadow-xl overflow-hidden transform transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 group">
               <div className="h-2 md:h-3 bg-gradient-to-r from-blue-500 to-blue-700"></div>
