@@ -194,7 +194,7 @@ export default function Home() {
                           </svg>
                         </div>
                         <div>
-                          <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-1">회장</h3>
+                          <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">회장</h3>
                           <p className="text-gray-800 text-base font-bold">{currentExecutive.president}</p>
                         </div>
                       </div>
@@ -206,7 +206,7 @@ export default function Home() {
                           </svg>
                         </div>
                         <div>
-                          <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-1">총무</h3>
+                          <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">총무</h3>
                           <p className="text-gray-800 text-base font-bold">{currentExecutive.treasurer}</p>
                         </div>
                       </div>
@@ -218,7 +218,7 @@ export default function Home() {
                           </svg>
                         </div>
                         <div>
-                          <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-1">임기</h3>
+                          <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">임기</h3>
                           <p className="text-gray-800 text-base font-bold">{currentExecutive.term}</p>
                         </div>
                       </div>
@@ -297,7 +297,7 @@ export default function Home() {
                           </svg>
                         </div>
                         <div>
-                          <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-1">날짜</h3>
+                          <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">날짜</h3>
                           <p className="text-gray-800 text-base font-bold">{nextMeeting.date || '미정'}</p>
                         </div>
                       </div>
@@ -309,7 +309,7 @@ export default function Home() {
                           </svg>
                         </div>
                         <div>
-                          <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-1">시간</h3>
+                          <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">시간</h3>
                           <p className="text-gray-800 text-base font-bold">{nextMeeting.time || '미정'}</p>
                         </div>
                       </div>
@@ -322,7 +322,7 @@ export default function Home() {
                           </svg>
                         </div>
                         <div>
-                          <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-1">장소</h3>
+                          <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">장소</h3>
                           <p className="text-gray-800 text-base font-bold">{nextMeeting.location || '미정'}</p>
                         </div>
                       </div>
