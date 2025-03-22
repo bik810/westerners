@@ -111,8 +111,17 @@ export default function MembersManagement() {
             role: formData.role
           };
           
-          console.log('createUserWithEmail 함수 호출 시작', { email: formData.email, userData });
-          await FirestoreService.createUserWithEmail(formData.email, userData);
+          console.log('createUserWithEmail 함수 타입:', typeof FirestoreService.createUserWithEmail);
+          
+          // 함수 참조 문제를 해결하기 위한 안전한 호출 방식 사용
+          const createUserFn = FirestoreService.createUserWithEmail;
+          if (typeof createUserFn !== 'function') {
+            console.error('createUserWithEmail 함수가 정의되지 않았습니다', FirestoreService);
+            throw new Error('계정 생성 함수를 찾을 수 없습니다. 개발자에게 문의하세요.');
+          }
+
+          console.log('createUserWithEmail 함수 호출 직전', { email: formData.email });
+          await createUserFn(formData.email, userData);
           console.log('계정 추가 성공');
           alert(`"${formData.email}" 계정이 생성되었습니다. 비밀번호 설정 링크가 이메일로 전송되었습니다.`);
         } catch (addError) {
