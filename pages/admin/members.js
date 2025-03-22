@@ -126,7 +126,16 @@ export default function MembersManagement() {
           alert(`"${formData.email}" 계정이 생성되었습니다. 비밀번호 설정 링크가 이메일로 전송되었습니다.`);
         } catch (addError) {
           console.error('계정 추가 중 상세 오류:', addError);
-          setError(`계정 추가 실패: ${addError.message}`);
+          
+          // 사용자 친화적인 오류 메시지 표시
+          // FirestoreService에서 변환된 오류 메시지 사용
+          const errorMessage = addError.message || '계정 추가 중 오류가 발생했습니다.';
+          setError(errorMessage);
+          
+          // 이미 사용 중인 이메일인 경우 알림창으로도 표시
+          if (errorMessage.includes('이미 사용 중인 이메일')) {
+            alert(errorMessage);
+          }
           return;
         }
       } else if (modalType === 'edit') {
