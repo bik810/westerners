@@ -6,7 +6,7 @@ import Footer from '../../components/Footer';
 import Modal from '../../components/Modal';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useAuth } from '../../lib/authContext';
-import { getAllUsers, updateUser, deleteUser, sendPasswordReset, createUserWithEmail } from '../../lib/firestoreService';
+import * as FirestoreService from '../../lib/firestoreService';
 
 export default function MembersManagement() {
   const [users, setUsers] = useState([]);
@@ -28,7 +28,7 @@ export default function MembersManagement() {
   const loadUsers = async () => {
     try {
       setIsLoading(true);
-      const usersData = await getAllUsers();
+      const usersData = await FirestoreService.getAllUsers();
       setUsers(usersData);
       setError(null);
     } catch (err) {
@@ -102,18 +102,10 @@ export default function MembersManagement() {
         }
         
         console.log('계정 추가 시작:', formData.email);
-        console.log('createUserWithEmail 함수 타입:', typeof createUserWithEmail);
-        
-        if (typeof createUserWithEmail !== 'function') {
-          console.error('createUserWithEmail 함수가 정의되지 않았습니다!');
-          console.log('사용 가능한 함수들:', Object.keys(require('../../lib/firestoreService')));
-          setError('서버 오류: 인증 함수를 찾을 수 없습니다. 관리자에게 문의하세요.');
-          return;
-        }
         
         // 이메일 링크를 통한 계정 생성
         try {
-          await createUserWithEmail(
+          await FirestoreService.createUserWithEmail(
             formData.email, 
             {
               name: formData.name,
@@ -137,7 +129,7 @@ export default function MembersManagement() {
           role: formData.role
         };
         
-        await updateUser(selectedUser.id, userData);
+        await FirestoreService.updateUser(selectedUser.id, userData);
       }
       
       await loadUsers();
@@ -153,7 +145,7 @@ export default function MembersManagement() {
     if (!window.confirm('정말로 이 회원을 삭제하시겠습니까?')) return;
     
     try {
-      await deleteUser(userId);
+      await FirestoreService.deleteUser(userId);
       await loadUsers();
     } catch (err) {
       console.error('회원 삭제 중 오류 발생:', err);
@@ -164,7 +156,7 @@ export default function MembersManagement() {
   // 비밀번호 재설정 처리
   const handleResetPassword = async (email) => {
     try {
-      await sendPasswordReset(email);
+      await FirestoreService.sendPasswordReset(email);
       alert(`"${email}" 주소로 비밀번호 재설정 링크가 전송되었습니다.`);
     } catch (err) {
       console.error('비밀번호 재설정 링크 전송 중 오류 발생:', err);
