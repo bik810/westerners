@@ -123,7 +123,7 @@ export default function MembersManagement() {
           console.log('createUserWithEmail 함수 호출 직전', { email: formData.email });
           await createUserFn(formData.email, userData);
           console.log('계정 추가 성공');
-          alert(`"${formData.email}" 계정이 생성되었습니다. 이메일 주소 인증 링크가 이메일로 전송되었습니다. 사용자는 이메일 인증 후 로그인할 수 있습니다.`);
+          alert(`"${formData.email}" 계정이 생성되었습니다.\n\n1. 이메일 주소 인증 링크가 전송되었습니다. 사용자가 이메일 인증을 완료해야 합니다.\n2. 비밀번호 설정 링크도 함께 전송되었습니다. 사용자는 이 링크로 비밀번호를 설정한 후 로그인할 수 있습니다.`);
         } catch (addError) {
           console.error('계정 추가 중 상세 오류:', addError);
           
