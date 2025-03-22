@@ -6,7 +6,8 @@ import Footer from '../../components/Footer';
 import Modal from '../../components/Modal';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useAuth } from '../../lib/authContext';
-import { getAllUsers, updateUser, deleteUser, createUserWithEmail, sendPasswordReset } from '../../lib/firestoreService';
+import { getAllUsers, updateUser, deleteUser, sendPasswordReset } from '../../lib/firestoreService';
+import { createUserWithEmail } from '../../lib/firestoreService';
 
 export default function MembersManagement() {
   const [users, setUsers] = useState([]);
@@ -101,17 +102,26 @@ export default function MembersManagement() {
           return;
         }
         
-        // 이메일 링크를 통한 계정 생성
-        await createUserWithEmail(
-          formData.email, 
-          {
-            name: formData.name,
-            phone: formData.phone,
-            role: formData.role
-          }
-        );
+        console.log('계정 추가 시작:', formData.email);
+        console.log('createUserWithEmail 함수 타입:', typeof createUserWithEmail);
         
-        alert(`"${formData.email}" 계정이 생성되었습니다. 비밀번호 설정 링크가 이메일로 전송되었습니다.`);
+        // 이메일 링크를 통한 계정 생성
+        try {
+          await createUserWithEmail(
+            formData.email, 
+            {
+              name: formData.name,
+              phone: formData.phone,
+              role: formData.role
+            }
+          );
+          console.log('계정 추가 성공');
+          alert(`"${formData.email}" 계정이 생성되었습니다. 비밀번호 설정 링크가 이메일로 전송되었습니다.`);
+        } catch (addError) {
+          console.error('계정 추가 중 상세 오류:', addError);
+          setError(`계정 추가 실패: ${addError.message}`);
+          return;
+        }
       } else if (modalType === 'edit') {
         if (!selectedUser) return;
         
