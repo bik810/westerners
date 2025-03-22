@@ -105,14 +105,14 @@ export default function MembersManagement() {
         
         // 이메일 링크를 통한 계정 생성
         try {
-          await FirestoreService.createUserWithEmail(
-            formData.email, 
-            {
-              name: formData.name,
-              phone: formData.phone,
-              role: formData.role
-            }
-          );
+          const userData = {
+            name: formData.name,
+            phone: formData.phone,
+            role: formData.role
+          };
+          
+          console.log('createUserWithEmail 함수 호출 시작', { email: formData.email, userData });
+          await FirestoreService.createUserWithEmail(formData.email, userData);
           console.log('계정 추가 성공');
           alert(`"${formData.email}" 계정이 생성되었습니다. 비밀번호 설정 링크가 이메일로 전송되었습니다.`);
         } catch (addError) {
