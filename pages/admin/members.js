@@ -22,7 +22,8 @@ export default function MembersManagement() {
     role: 'member',
     password: ''
   });
-  const { hasPermission } = useAuth();
+  const [adminPassword, setAdminPassword] = useState('');
+  const { hasPermission, currentUser } = useAuth();
   const router = useRouter();
 
   // 데이터 로드 함수
@@ -83,6 +84,7 @@ export default function MembersManagement() {
       role: 'member',
       password: ''
     });
+    setAdminPassword(''); // 관리자 비밀번호 초기화
   };
 
   // 폼 데이터 변경 처리
@@ -105,11 +107,25 @@ export default function MembersManagement() {
           return;
         }
         
-        await createUser(formData.email, formData.password, {
-          name: formData.name,
-          phone: formData.phone,
-          role: formData.role
-        });
+        if (!adminPassword) {
+          setError('관리자 비밀번호를 입력해주세요. 새 계정 생성 후 다시 관리자 계정으로 로그인하기 위해 필요합니다.');
+          return;
+        }
+        
+        // 관리자 정보를 함께 전달
+        await createUser(
+          formData.email, 
+          formData.password, 
+          {
+            name: formData.name,
+            phone: formData.phone,
+            role: formData.role
+          },
+          {
+            email: currentUser.email,
+            password: adminPassword
+          }
+        );
       } else if (modalType === 'edit') {
         if (!selectedUser) return;
         
@@ -123,6 +139,7 @@ export default function MembersManagement() {
       }
       
       await loadUsers();
+      setAdminPassword(''); // 관리자 비밀번호 초기화
       handleCloseModal();
     } catch (err) {
       console.error('회원 데이터 처리 중 오류 발생:', err);
@@ -303,22 +320,40 @@ export default function MembersManagement() {
             </div>
             
             {modalType === 'add' && (
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  임시 비밀번호
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="임시 비밀번호를 입력하세요"
-                  required={modalType === 'add'}
-                />
-                <p className="text-xs text-gray-500 mt-1">최소 6자 이상이어야 합니다</p>
-              </div>
+              <>
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    임시 비밀번호
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="임시 비밀번호를 입력하세요"
+                    required={modalType === 'add'}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">최소 6자 이상이어야 합니다</p>
+                </div>
+                
+                <div>
+                  <label htmlFor="adminPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                    관리자 비밀번호
+                  </label>
+                  <input
+                    type="password"
+                    id="adminPassword"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="현재 관리자 비밀번호를 입력하세요"
+                    required={modalType === 'add'}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">계정 생성 후 다시 관리자로 로그인하기 위해 필요합니다</p>
+                </div>
+              </>
             )}
             
             <div>
