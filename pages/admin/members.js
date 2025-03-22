@@ -6,8 +6,7 @@ import Footer from '../../components/Footer';
 import Modal from '../../components/Modal';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useAuth } from '../../lib/authContext';
-import { getAllUsers, updateUser, deleteUser, sendPasswordReset } from '../../lib/firestoreService';
-import { createUserWithEmail } from '../../lib/firestoreService';
+import { getAllUsers, updateUser, deleteUser, sendPasswordReset, createUserWithEmail } from '../../lib/firestoreService';
 
 export default function MembersManagement() {
   const [users, setUsers] = useState([]);
@@ -104,6 +103,13 @@ export default function MembersManagement() {
         
         console.log('계정 추가 시작:', formData.email);
         console.log('createUserWithEmail 함수 타입:', typeof createUserWithEmail);
+        
+        if (typeof createUserWithEmail !== 'function') {
+          console.error('createUserWithEmail 함수가 정의되지 않았습니다!');
+          console.log('사용 가능한 함수들:', Object.keys(require('../../lib/firestoreService')));
+          setError('서버 오류: 인증 함수를 찾을 수 없습니다. 관리자에게 문의하세요.');
+          return;
+        }
         
         // 이메일 링크를 통한 계정 생성
         try {
