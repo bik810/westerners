@@ -6,24 +6,22 @@ import Footer from '../../components/Footer';
 import Modal from '../../components/Modal';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useAuth } from '../../lib/authContext';
-import { getAllUsers, createUser, updateUser, deleteUser } from '../../lib/firestoreService';
+import { getAllUsers, updateUser, deleteUser, createUserWithEmail, sendPasswordReset } from '../../lib/firestoreService';
 
 export default function MembersManagement() {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalType, setModalType] = useState(''); // 'add', 'edit'
+  const [modalType, setModalType] = useState(''); // 'add', 'edit', 'view'
   const [selectedUser, setSelectedUser] = useState(null);
   const [formData, setFormData] = useState({
     email: '',
     name: '',
     phone: '',
-    role: 'member',
-    password: ''
+    role: 'member'
   });
-  const [adminPassword, setAdminPassword] = useState('');
-  const { hasPermission, currentUser } = useAuth();
+  const { hasPermission } = useAuth();
   const router = useRouter();
 
   // 데이터 로드 함수
@@ -56,16 +54,14 @@ export default function MembersManagement() {
         email: user.email || '',
         name: user.name || '',
         phone: user.phone || '',
-        role: user.role || 'member',
-        password: '' // 비밀번호는 표시하지 않음
+        role: user.role || 'member'
       });
     } else {
       setFormData({
         email: '',
         name: '',
         phone: '',
-        role: 'member',
-        password: ''
+        role: 'member'
       });
     }
     
@@ -81,10 +77,8 @@ export default function MembersManagement() {
       email: '',
       name: '',
       phone: '',
-      role: 'member',
-      password: ''
+      role: 'member'
     });
-    setAdminPassword(''); // 관리자 비밀번호 초기화
   };
 
   // 폼 데이터 변경 처리
@@ -102,30 +96,22 @@ export default function MembersManagement() {
     
     try {
       if (modalType === 'add') {
-        if (!formData.email || !formData.password) {
-          setError('이메일과 비밀번호는 필수 입력 항목입니다.');
+        if (!formData.email) {
+          setError('이메일은 필수 입력 항목입니다.');
           return;
         }
         
-        if (!adminPassword) {
-          setError('관리자 비밀번호를 입력해주세요. 새 계정 생성 후 다시 관리자 계정으로 로그인하기 위해 필요합니다.');
-          return;
-        }
-        
-        // 관리자 정보를 함께 전달
-        await createUser(
+        // 이메일 링크를 통한 계정 생성
+        await createUserWithEmail(
           formData.email, 
-          formData.password, 
           {
             name: formData.name,
             phone: formData.phone,
             role: formData.role
-          },
-          {
-            email: currentUser.email,
-            password: adminPassword
           }
         );
+        
+        alert(`"${formData.email}" 계정이 생성되었습니다. 비밀번호 설정 링크가 이메일로 전송되었습니다.`);
       } else if (modalType === 'edit') {
         if (!selectedUser) return;
         
@@ -139,7 +125,6 @@ export default function MembersManagement() {
       }
       
       await loadUsers();
-      setAdminPassword(''); // 관리자 비밀번호 초기화
       handleCloseModal();
     } catch (err) {
       console.error('회원 데이터 처리 중 오류 발생:', err);
@@ -157,6 +142,17 @@ export default function MembersManagement() {
     } catch (err) {
       console.error('회원 삭제 중 오류 발생:', err);
       setError('회원을 삭제하는 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 비밀번호 재설정 처리
+  const handleResetPassword = async (email) => {
+    try {
+      await sendPasswordReset(email);
+      alert(`"${email}" 주소로 비밀번호 재설정 링크가 전송되었습니다.`);
+    } catch (err) {
+      console.error('비밀번호 재설정 링크 전송 중 오류 발생:', err);
+      setError('비밀번호 재설정 링크를 전송하는 중 오류가 발생했습니다.');
     }
   };
 
@@ -264,18 +260,12 @@ export default function MembersManagement() {
                                 {user.createdAt ? new Date(user.createdAt).toLocaleDateString('ko-KR') : '-'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                <div className="flex space-x-2">
+                                <div className="flex justify-center">
                                   <button
-                                    onClick={() => handleOpenModal('edit', user)}
-                                    className="text-blue-600 hover:text-blue-800"
+                                    onClick={() => handleOpenModal('view', user)}
+                                    className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md transition-colors duration-200"
                                   >
-                                    수정
-                                  </button>
-                                  <button
-                                    onClick={() => handleDelete(user.id)}
-                                    className="text-red-600 hover:text-red-800"
-                                  >
-                                    삭제
+                                    상세
                                   </button>
                                 </div>
                               </td>
@@ -299,126 +289,199 @@ export default function MembersManagement() {
         <Modal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          title={modalType === 'add' ? '계정 추가' : '계정 정보 수정'}
+          title={
+            modalType === 'add' 
+              ? '계정 추가' 
+              : modalType === 'edit' 
+                ? '계정 정보 수정' 
+                : '회원 상세 정보'
+          }
         >
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                이메일
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="이메일 주소를 입력하세요"
-                required
-                disabled={modalType === 'edit'} // 수정 시에는 이메일 변경 불가
-              />
-            </div>
-            
-            {modalType === 'add' && (
-              <>
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                    임시 비밀번호
-                  </label>
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="임시 비밀번호를 입력하세요"
-                    required={modalType === 'add'}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">최소 6자 이상이어야 합니다</p>
+          {modalType === 'view' ? (
+            <div className="space-y-6">
+              <div className="bg-gray-50 p-5 rounded-lg">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">회원 정보</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">이름</p>
+                    <p className="text-base text-gray-900">{selectedUser?.name || '-'}</p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">이메일</p>
+                    <p className="text-base text-gray-900">{selectedUser?.email || '-'}</p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">연락처</p>
+                    <p className="text-base text-gray-900">{selectedUser?.phone || '-'}</p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">권한</p>
+                    <p className="text-base text-gray-900">
+                      {selectedUser?.role === 'admin' 
+                        ? '관리자' 
+                        : selectedUser?.role === 'treasurer' 
+                          ? '총무' 
+                          : '일반회원'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex flex-col space-y-2">
+                <p className="text-sm font-medium text-gray-500">계정 생성일</p>
+                <p className="text-sm text-gray-700">
+                  {selectedUser?.createdAt 
+                    ? new Date(selectedUser.createdAt).toLocaleString('ko-KR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })
+                    : '-'}
+                </p>
+              </div>
+              
+              <div className="flex flex-col space-y-4 mt-6">
+                <div className="flex space-x-3 justify-start">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleOpenModal('edit', selectedUser);
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
+                  >
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                    </svg>
+                    수정
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => handleResetPassword(selectedUser.email)}
+                    className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 flex items-center"
+                  >
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                    </svg>
+                    비밀번호 재설정
+                  </button>
                 </div>
                 
-                <div>
-                  <label htmlFor="adminPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                    관리자 비밀번호
-                  </label>
-                  <input
-                    type="password"
-                    id="adminPassword"
-                    value={adminPassword}
-                    onChange={(e) => setAdminPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="현재 관리자 비밀번호를 입력하세요"
-                    required={modalType === 'add'}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">계정 생성 후 다시 관리자로 로그인하기 위해 필요합니다</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleCloseModal();
+                    setTimeout(() => {
+                      if (window.confirm('정말로 이 회원을 삭제하시겠습니까?')) {
+                        handleDelete(selectedUser.id);
+                      }
+                    }, 300);
+                  }}
+                  className="px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50 flex items-center justify-center"
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                  계정 삭제
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  이메일
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleFormChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="이메일 주소를 입력하세요"
+                  required
+                  disabled={modalType === 'edit'} // 수정 시에는 이메일 변경 불가
+                />
+              </div>
+              
+              {modalType === 'add' && (
+                <div className="bg-blue-50 p-4 rounded-md mb-4 text-sm text-blue-700">
+                  <p className="font-medium">계정이 생성되면 입력한 이메일로 비밀번호 설정 링크가 전송됩니다.</p>
+                  <p className="mt-1">회원은 이메일에 포함된 링크를 통해 직접 비밀번호를 설정할 수 있습니다.</p>
                 </div>
-              </>
-            )}
-            
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                이름
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="이름을 입력하세요"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                연락처
-              </label>
-              <input
-                type="text"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="연락처를 입력하세요"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                권한
-              </label>
-              <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="member">일반회원</option>
-                <option value="treasurer">총무</option>
-                <option value="admin">관리자</option>
-              </select>
-            </div>
-            
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={handleCloseModal}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
-              >
-                취소
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 text-white font-medium rounded-md bg-blue-600 hover:bg-blue-700"
-              >
-                {modalType === 'add' ? '추가' : '수정'}
-              </button>
-            </div>
-          </form>
+              )}
+              
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                  이름
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleFormChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="이름을 입력하세요"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                  연락처
+                </label>
+                <input
+                  type="text"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleFormChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="연락처를 입력하세요"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                  권한
+                </label>
+                <select
+                  id="role"
+                  name="role"
+                  value={formData.role}
+                  onChange={handleFormChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="member">일반회원</option>
+                  <option value="treasurer">총무</option>
+                  <option value="admin">관리자</option>
+                </select>
+              </div>
+              
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-white font-medium rounded-md bg-blue-600 hover:bg-blue-700"
+                >
+                  {modalType === 'add' ? '추가' : '수정'}
+                </button>
+              </div>
+            </form>
+          )}
         </Modal>
       </div>
     </ProtectedRoute>
