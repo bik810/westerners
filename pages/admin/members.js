@@ -121,9 +121,24 @@ export default function MembersManagement() {
           }
 
           console.log('createUserWithEmail 함수 호출 직전', { email: formData.email });
+          
+          // 로딩 상태 활성화
+          setIsLoading(true);
+          
+          // 계정 생성 시도
           await createUserFn(formData.email, userData);
+          
           console.log('계정 추가 성공');
-          alert(`"${formData.email}" 계정이 생성되었습니다.\n\n1. 이메일 주소 인증 링크가 전송되었습니다. 사용자가 이메일 인증을 완료해야 합니다.\n2. 비밀번호 설정 링크도 함께 전송되었습니다. 사용자는 이 링크로 비밀번호를 설정한 후 로그인할 수 있습니다.`);
+          
+          // 성공 메시지 표시
+          alert(`"${formData.email}" 계정이 생성되었습니다.\n\n비밀번호 설정 링크가 이메일로 전송되었습니다. 사용자는 이 링크로 비밀번호를 설정한 후 로그인할 수 있습니다.`);
+          
+          // 사용자를 추가한 후 인증 상태가 변경될 수 있으므로
+          // 페이지를 다시 로드하는 대신 모달만 닫고 사용자 목록을 새로고침
+          handleCloseModal();
+          await loadUsers();
+          
+          return; // 여기서 함수 종료
         } catch (addError) {
           console.error('계정 추가 중 상세 오류:', addError);
           
@@ -137,6 +152,9 @@ export default function MembersManagement() {
             alert(errorMessage);
           }
           return;
+        } finally {
+          // 로딩 상태 비활성화
+          setIsLoading(false);
         }
       } else if (modalType === 'edit') {
         if (!selectedUser) return;
