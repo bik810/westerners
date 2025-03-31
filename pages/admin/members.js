@@ -17,6 +17,7 @@ export default function MembersManagement() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [formData, setFormData] = useState({
     email: '',
+    password: '',
     name: '',
     phone: '',
     role: 'member'
@@ -59,6 +60,7 @@ export default function MembersManagement() {
     } else {
       setFormData({
         email: '',
+        password: '',
         name: '',
         phone: '',
         role: 'member'
@@ -75,6 +77,7 @@ export default function MembersManagement() {
     setSelectedUser(null);
     setFormData({
       email: '',
+      password: '',
       name: '',
       phone: '',
       role: 'member'
@@ -96,66 +99,22 @@ export default function MembersManagement() {
     
     try {
       if (modalType === 'add') {
-        if (!formData.email) {
-          setError('이메일은 필수 입력 항목입니다.');
+        if (!formData.email || !formData.password) {
+          setError('이메일과 비밀번호를 모두 입력해주세요.');
           return;
         }
         
         console.log('계정 추가 시작:', formData.email);
         
-        // 이메일 링크를 통한 계정 생성
-        try {
-          const userData = {
-            name: formData.name,
-            phone: formData.phone,
-            role: formData.role
-          };
-          
-          console.log('createUserWithEmail 함수 타입:', typeof FirestoreService.createUserWithEmail);
-          
-          // 함수 참조 문제를 해결하기 위한 안전한 호출 방식 사용
-          const createUserFn = FirestoreService.createUserWithEmail;
-          if (typeof createUserFn !== 'function') {
-            console.error('createUserWithEmail 함수가 정의되지 않았습니다', FirestoreService);
-            throw new Error('계정 생성 함수를 찾을 수 없습니다. 개발자에게 문의하세요.');
-          }
-
-          console.log('createUserWithEmail 함수 호출 직전', { email: formData.email });
-          
-          // 로딩 상태 활성화
-          setIsLoading(true);
-          
-          // 계정 생성 시도
-          await createUserFn(formData.email, userData);
-          
-          console.log('계정 추가 성공');
-          
-          // 성공 메시지 표시
-          alert(`"${formData.email}" 계정이 생성되었습니다.\n\n비밀번호 설정 링크가 이메일로 전송되었습니다. 사용자는 이 링크로 비밀번호를 설정한 후 로그인할 수 있습니다.`);
-          
-          // 사용자를 추가한 후 인증 상태가 변경될 수 있으므로
-          // 페이지를 다시 로드하는 대신 모달만 닫고 사용자 목록을 새로고침
-          handleCloseModal();
-          await loadUsers();
-          
-          return; // 여기서 함수 종료
-        } catch (addError) {
-          console.error('계정 추가 중 상세 오류:', addError);
-          
-          // 사용자 친화적인 오류 메시지 표시
-          // FirestoreService에서 변환된 오류 메시지 사용
-          const errorMessage = addError.message || '계정 추가 중 오류가 발생했습니다.';
-          setError(errorMessage);
-          
-          // 이미 사용 중인 이메일인 경우 알림창으로도 표시
-          if (errorMessage.includes('이미 사용 중인 이메일')) {
-            alert(errorMessage);
-          }
-          return;
-        } finally {
-          // 로딩 상태 비활성화
-          setIsLoading(false);
-        }
+        setIsLoading(true);
+        await FirestoreService.createUser(formData.email, formData.password, { role: formData.role });
+        
+        console.log('계정 추가 성공');
+        
+        alert(`계정이 생성되었습니다.\n\n이메일: ${formData.email}\n비밀번호: ${formData.password}`);
+        
+        handleCloseModal();
+        await loadUsers();
       } else if (modalType === 'edit') {
         if (!selectedUser) return;
         
@@ -173,6 +132,8 @@ export default function MembersManagement() {
     } catch (err) {
       console.error('회원 데이터 처리 중 오류 발생:', err);
       setError('회원 데이터를 처리하는 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
