@@ -52,7 +52,6 @@ export default function GroupInfo() {
   const [formData, setFormData] = useState({
     name: '',
     role: 'member',
-    age: '',
     birthday: '',
     children: ''
   });
@@ -198,6 +197,16 @@ export default function GroupInfo() {
 
   // 회원 정렬 함수
   const sortMembers = (members) => {
+    // 2차 정렬을 위한 이름 순서 정의
+    const nameOrder = {
+      '이창호': 1,
+      '안진우': 2,
+      '이승용': 3,
+      '김건웅': 4,
+      '김재훈': 5,
+      '이용주': 6
+    };
+    
     return [...members].sort((a, b) => {
       // 역할 우선순위: 회장(president) > 총무(treasurer) > 일반회원(member)
       const roleOrder = { president: 1, treasurer: 2, member: 3, admin: 4 };
@@ -209,22 +218,25 @@ export default function GroupInfo() {
         return roleA - roleB;
       }
       
-      // 역할이 같고 일반회원인 경우
-      if (roleA === 3) {
-        // 나이가 있는 경우 나이 내림차순 (나이 많은 순)
-        const ageA = parseInt(a.age) || 0;
-        const ageB = parseInt(b.age) || 0;
-        
-        if (ageA !== ageB) {
-          return ageB - ageA;
-        }
-        
-        // 나이가 같으면 이름 가나다순
-        return (a.name || '').localeCompare(b.name || '', 'ko');
+      // 역할이 같으면 지정된 이름 순서로 정렬
+      const nameA = a.name || '';
+      const nameB = b.name || '';
+      
+      // 지정된 이름인 경우 해당 순서 사용
+      const orderA = nameOrder[nameA] || 999;
+      const orderB = nameOrder[nameB] || 999;
+      
+      // 둘 다 지정된 이름 목록에 있으면 정의된 순서대로 정렬
+      if (orderA !== 999 && orderB !== 999) {
+        return orderA - orderB;
       }
       
-      // 그 외의 경우 이름 가나다순
-      return (a.name || '').localeCompare(b.name || '', 'ko');
+      // 한쪽만 지정된 이름 목록에 있으면 그 이름을 앞으로
+      if (orderA !== 999) return -1;
+      if (orderB !== 999) return 1;
+      
+      // 둘 다 지정된 이름 목록에 없으면 이름 가나다순
+      return nameA.localeCompare(nameB, 'ko');
     });
   };
 
@@ -236,7 +248,6 @@ export default function GroupInfo() {
       setFormData({
         name: member.name || '',
         role: member.role || 'member',
-        age: member.age || '',
         birthday: member.birthday || '',
         children: member.children || ''
       });
@@ -244,7 +255,6 @@ export default function GroupInfo() {
       setFormData({
         name: '',
         role: 'member',
-        age: '',
         birthday: '',
         children: ''
       });
@@ -260,7 +270,6 @@ export default function GroupInfo() {
     setFormData({
       name: '',
       role: 'member',
-      age: '',
       birthday: '',
       children: ''
     });
@@ -283,7 +292,6 @@ export default function GroupInfo() {
       const memberData = {
         name: formData.name,
         role: formData.role,
-        age: formData.age,
         birthday: formData.birthday,
         children: formData.children,
         updatedAt: new Date().toISOString()
@@ -851,9 +859,6 @@ export default function GroupInfo() {
                                   이름
                                 </th>
                                 <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  나이
-                                </th>
-                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                   생일
                                 </th>
                                 <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -876,9 +881,6 @@ export default function GroupInfo() {
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="font-medium text-gray-800">{member.name || '-'}</div>
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                                    {member.age || '-'}
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap text-gray-500">
                                     {member.birthday || '-'}
@@ -1111,7 +1113,7 @@ export default function GroupInfo() {
             
             <div>
               <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                구분
+                역할
               </label>
               <select
                 id="role"
@@ -1120,24 +1122,10 @@ export default function GroupInfo() {
                 onChange={handleFormChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="member">일반회원</option>
                 <option value="president">회장</option>
                 <option value="treasurer">총무</option>
+                <option value="member">일반 회원</option>
               </select>
-            </div>
-            
-            <div>
-              <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">
-                나이
-              </label>
-              <input
-                type="text"
-                id="age"
-                name="age"
-                value={formData.age}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
             </div>
             
             <div>
@@ -1150,8 +1138,8 @@ export default function GroupInfo() {
                 name="birthday"
                 value={formData.birthday}
                 onChange={handleFormChange}
-                placeholder="예: 1990/01/01"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="예: 03월 15일"
               />
             </div>
             
@@ -1165,8 +1153,8 @@ export default function GroupInfo() {
                 name="children"
                 value={formData.children}
                 onChange={handleFormChange}
-                placeholder="예: 딸1, 아들2"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="예: 아들(10), 딸(7)"
               />
             </div>
             
