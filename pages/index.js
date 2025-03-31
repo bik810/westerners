@@ -102,14 +102,12 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                   </svg>
                 </Link>
-                {userProfile && (userProfile.role === 'treasurer' || userProfile.role === 'admin') && (
-                  <Link href="/fees" className="bg-green-600 hover:bg-green-500 text-white font-semibold py-3 md:py-4 px-7 md:px-9 rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-green-600/30 flex items-center justify-center">
-                    <span>회비 관리</span>
-                    <svg className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                  </Link>
-                )}
+                <Link href="/fees" className="bg-green-600 hover:bg-green-500 text-white font-semibold py-3 md:py-4 px-7 md:px-9 rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-green-600/30 flex items-center justify-center">
+                  <span>회비 관리</span>
+                  <svg className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </Link>
                 {userProfile && userProfile.role === 'admin' && (
                   <Link href="/admin/members" className="bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 md:py-4 px-7 md:px-9 rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-purple-600/30 flex items-center justify-center">
                     <span>계정 관리</span>
