@@ -146,10 +146,10 @@ export default function Gallery() {
           compressedImage = await compressImage(
             uploadForm.file, 
             {
-              maxWidth: 1200,
-              maxHeight: 1200,
-              quality: 0.7,
-              maxSize: 900000 // 900KB (Firestore 제한 1MB보다 작게)
+              maxWidth: 1000,
+              maxHeight: 1000,
+              quality: 0.5,
+              maxSize: 700000
             },
             (progress) => {
               // 압축 진행 상황 업데이트 (0-50%)
