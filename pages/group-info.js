@@ -405,23 +405,17 @@ export default function GroupInfo() {
   const handleOpenRulesModal = () => {
     // 전체 내용을 텍스트로 변환
     const fullText = Object.values(rulesData)
-      .sort((a, b) => {
-        const chapterA = parseInt(a[0]?.chapter) || 0;
-        const chapterB = parseInt(b[0]?.chapter) || 0;
-        return chapterA - chapterB;
-      })
-      .map(chapterRules => {
-        if (chapterRules.length === 0) return '';
+      .filter(chapter => chapter && chapter.rules)
+      .sort((a, b) => a.order - b.order)
+      .map(chapter => {
+        if (!chapter.rules || chapter.rules.length === 0) return '';
         
-        const chapter = chapterRules[0]?.chapter || '';
-        const chapterTitle = getChapterTitle(chapter);
-        
-        const rulesText = chapterRules
+        const rulesText = chapter.rules
           .sort((a, b) => parseInt(a.section) - parseInt(b.section))
           .map(rule => `제 ${rule.section}조 ${rule.title}\n${rule.content}`)
           .join('\n\n');
         
-        return `제 ${chapter}장 ${chapterTitle}\n\n${rulesText}`;
+        return `제 ${chapter.order}장 ${chapter.title}\n\n${rulesText}`;
       })
       .filter(text => text !== '')
       .join('\n\n\n');
@@ -429,18 +423,6 @@ export default function GroupInfo() {
     setRulesModalContent(fullText);
     setIsRulesEditMode(false);
     setIsRulesModalOpen(true);
-  };
-
-  // 장 제목 가져오기
-  const getChapterTitle = (chapter) => {
-    switch (chapter) {
-      case '1': return '단체 정의';
-      case '2': return '회원';
-      case '3': return '재정';
-      case '4': return '정기 모임';
-      case '5': return '안전';
-      default: return '';
-    }
   };
 
   // 회칙 전체 저장
@@ -458,6 +440,7 @@ export default function GroupInfo() {
         safety: []
       };
       
+      // 새로운 장 정보를 파싱하고 ID 부여
       chaptersText.forEach(chapterText => {
         if (!chapterText.trim()) return;
         
@@ -468,7 +451,7 @@ export default function GroupInfo() {
         if (!chapterMatch) return;
         
         const chapterNumber = chapterMatch[1];
-        // const chapterTitle = chapterMatch[2].trim();
+        const chapterTitle = chapterMatch[2].trim();
         
         const categoryMap = {
           '1': 'general',
@@ -478,8 +461,22 @@ export default function GroupInfo() {
           '5': 'safety'
         };
         
-        const category = categoryMap[chapterNumber] || 'general';
+        const category = categoryMap[chapterNumber] || `chapter_${chapterNumber}`;
         
+        // 해당 카테고리가 없으면 생성
+        if (!newRulesData[category]) {
+          newRulesData[category] = [];
+        }
+        
+        // 장별 정보 설정
+        newRulesData[category] = {
+          id: category,
+          order: parseInt(chapterNumber),
+          title: chapterTitle,
+          rules: []
+        };
+        
+        // 조항 파싱 및 추가
         rulesText.forEach(ruleText => {
           if (!ruleText.trim()) return;
           
@@ -490,8 +487,8 @@ export default function GroupInfo() {
           const title = sectionMatch[2].trim();
           const content = sectionMatch[3].trim();
           
-          newRulesData[category].push({
-            id: `${category}${section}`,
+          newRulesData[category].rules.push({
+            id: `${category}_${section}`,
             chapter: chapterNumber,
             section,
             title,
@@ -501,6 +498,9 @@ export default function GroupInfo() {
         });
       });
       
+      // 디버깅 로그
+      console.log('파싱된 회칙 데이터:', newRulesData);
+      
       // Firestore에 저장
       const rulesRef = doc(db, 'settings', 'rules');
       await setDoc(rulesRef, newRulesData);
@@ -509,10 +509,18 @@ export default function GroupInfo() {
       setRulesData(newRulesData);
       setIsRulesEditMode(false);
       
+      // 모달 닫기 전에 데이터 다시 불러오기
+      const rulesSnapshot = await getDoc(rulesRef);
+      if (rulesSnapshot.exists()) {
+        const data = rulesSnapshot.data();
+        console.log('서버에서 불러온 데이터:', data);
+        setRulesData(data);
+      }
+      
       alert('회칙이 저장되었습니다.');
     } catch (err) {
       console.error('회칙 저장 중 오류 발생:', err);
-      alert('회칙을 저장하는 중 오류가 발생했습니다.');
+      alert('회칙을 저장하는 중 오류가 발생했습니다: ' + err.message);
     }
   };
 
@@ -943,61 +951,27 @@ export default function GroupInfo() {
                       
                           {/* Rules Tabs */}
                           <div className="flex flex-wrap border-b mb-4">
-                            <button
-                              onClick={() => setRulesActiveTab('general')}
-                              className={`px-4 py-2 text-sm font-medium ${
-                                rulesActiveTab === 'general'
-                                  ? 'text-blue-600 border-b-2 border-blue-600'
-                                  : 'text-gray-500 hover:text-blue-600'
-                              }`}
-                            >
-                              1장 단체 정의
-                            </button>
-                            <button
-                              onClick={() => setRulesActiveTab('members')}
-                              className={`px-4 py-2 text-sm font-medium ${
-                                rulesActiveTab === 'members'
-                                  ? 'text-blue-600 border-b-2 border-blue-600'
-                                  : 'text-gray-500 hover:text-blue-600'
-                              }`}
-                            >
-                              2장 회원
-                            </button>
-                            <button
-                              onClick={() => setRulesActiveTab('finance')}
-                              className={`px-4 py-2 text-sm font-medium ${
-                                rulesActiveTab === 'finance'
-                                  ? 'text-blue-600 border-b-2 border-blue-600'
-                                  : 'text-gray-500 hover:text-blue-600'
-                              }`}
-                            >
-                              3장 재정
-                            </button>
-                            <button
-                              onClick={() => setRulesActiveTab('regular')}
-                              className={`px-4 py-2 text-sm font-medium ${
-                                rulesActiveTab === 'regular'
-                                  ? 'text-blue-600 border-b-2 border-blue-600'
-                                  : 'text-gray-500 hover:text-blue-600'
-                              }`}
-                            >
-                              4장 정기 모임
-                            </button>
-                            <button
-                              onClick={() => setRulesActiveTab('safety')}
-                              className={`px-4 py-2 text-sm font-medium ${
-                                rulesActiveTab === 'safety'
-                                  ? 'text-blue-600 border-b-2 border-blue-600'
-                                  : 'text-gray-500 hover:text-blue-600'
-                              }`}
-                            >
-                              5장 안전
-                            </button>
+                            {Object.values(rulesData)
+                              .filter(chapter => chapter && chapter.rules)
+                              .sort((a, b) => a.order - b.order)
+                              .map(chapter => (
+                                <button
+                                  key={chapter.id}
+                                  onClick={() => setRulesActiveTab(chapter.id)}
+                                  className={`px-4 py-2 text-sm font-medium ${
+                                    rulesActiveTab === chapter.id
+                                      ? 'text-blue-600 border-b-2 border-blue-600'
+                                      : 'text-gray-500 hover:text-blue-600'
+                                  }`}
+                                >
+                                  {chapter.order}장 {chapter.title}
+                                </button>
+                              ))}
                           </div>
                       
                           <div className="space-y-6">
-                            {rulesData[rulesActiveTab].length > 0 ? (
-                              rulesData[rulesActiveTab].map((rule) => (
+                            {rulesData[rulesActiveTab]?.rules?.length > 0 ? (
+                              rulesData[rulesActiveTab].rules.map((rule) => (
                                 <div key={rule.id} className="bg-gray-50 p-4 rounded-lg">
                                   <div className="flex justify-between items-start mb-2">
                                     <h4 className="text-lg font-semibold text-gray-800">
@@ -1256,110 +1230,35 @@ export default function GroupInfo() {
           ) : (
             <>
               <div className="space-y-8 max-h-[70vh] overflow-y-auto p-2">
-                {/* 1장 */}
-                <div>
-                  <h3 className="text-xl font-bold text-blue-800 mb-4 pb-2 border-b border-blue-200">1장 단체 정의</h3>
-                  <div className="space-y-4">
-                    {rulesData.general.length > 0 ? (
-                      rulesData.general.map((rule) => (
-                        <div key={rule.id} className="bg-gray-50 p-4 rounded-lg">
-                          <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                            <span className="text-blue-600">{rule.chapter}장 {rule.section}조</span>
-                            <span className="mx-2">|</span>
-                            <span>{rule.title}</span>
-                          </h4>
-                          <p className="text-gray-700 whitespace-pre-line">{rule.content}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">등록된 회칙이 없습니다.</p>
-                    )}
-                  </div>
-                </div>
-                
-                {/* 2장 */}
-                <div>
-                  <h3 className="text-xl font-bold text-blue-800 mb-4 pb-2 border-b border-blue-200">2장 회원</h3>
-                  <div className="space-y-4">
-                    {rulesData.members.length > 0 ? (
-                      rulesData.members.map((rule) => (
-                        <div key={rule.id} className="bg-gray-50 p-4 rounded-lg">
-                          <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                            <span className="text-blue-600">{rule.chapter}장 {rule.section}조</span>
-                            <span className="mx-2">|</span>
-                            <span>{rule.title}</span>
-                          </h4>
-                          <p className="text-gray-700 whitespace-pre-line">{rule.content}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">등록된 회칙이 없습니다.</p>
-                    )}
-                  </div>
-                </div>
-                
-                {/* 3장 */}
-                <div>
-                  <h3 className="text-xl font-bold text-blue-800 mb-4 pb-2 border-b border-blue-200">3장 재정</h3>
-                  <div className="space-y-4">
-                    {rulesData.finance.length > 0 ? (
-                      rulesData.finance.map((rule) => (
-                        <div key={rule.id} className="bg-gray-50 p-4 rounded-lg">
-                          <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                            <span className="text-blue-600">{rule.chapter}장 {rule.section}조</span>
-                            <span className="mx-2">|</span>
-                            <span>{rule.title}</span>
-                          </h4>
-                          <p className="text-gray-700 whitespace-pre-line">{rule.content}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">등록된 회칙이 없습니다.</p>
-                    )}
-                  </div>
-                </div>
-                
-                {/* 4장 */}
-                <div>
-                  <h3 className="text-xl font-bold text-blue-800 mb-4 pb-2 border-b border-blue-200">4장 정기 모임</h3>
-                  <div className="space-y-4">
-                    {rulesData.regular.length > 0 ? (
-                      rulesData.regular.map((rule) => (
-                        <div key={rule.id} className="bg-gray-50 p-4 rounded-lg">
-                          <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                            <span className="text-blue-600">{rule.chapter}장 {rule.section}조</span>
-                            <span className="mx-2">|</span>
-                            <span>{rule.title}</span>
-                          </h4>
-                          <p className="text-gray-700 whitespace-pre-line">{rule.content}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">등록된 회칙이 없습니다.</p>
-                    )}
-                  </div>
-                </div>
-                
-                {/* 5장 */}
-                <div>
-                  <h3 className="text-xl font-bold text-blue-800 mb-4 pb-2 border-b border-blue-200">5장 안전</h3>
-                  <div className="space-y-4">
-                    {rulesData.safety.length > 0 ? (
-                      rulesData.safety.map((rule) => (
-                        <div key={rule.id} className="bg-gray-50 p-4 rounded-lg">
-                          <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                            <span className="text-blue-600">{rule.chapter}장 {rule.section}조</span>
-                            <span className="mx-2">|</span>
-                            <span>{rule.title}</span>
-                          </h4>
-                          <p className="text-gray-700 whitespace-pre-line">{rule.content}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">등록된 회칙이 없습니다.</p>
-                    )}
-                  </div>
-                </div>
+                {Object.values(rulesData)
+                  .filter(chapter => chapter && chapter.rules)
+                  .sort((a, b) => a.order - b.order)
+                  .map(chapter => (
+                    <div key={chapter.id}>
+                      <h3 className="text-xl font-bold text-blue-800 mb-4 pb-2 border-b border-blue-200">
+                        {chapter.order}장 {chapter.title}
+                      </h3>
+                      <div className="space-y-4">
+                        {chapter.rules && chapter.rules.length > 0 ? (
+                          chapter.rules
+                            .sort((a, b) => parseInt(a.section) - parseInt(b.section))
+                            .map((rule) => (
+                              <div key={rule.id} className="bg-gray-50 p-4 rounded-lg">
+                                <h4 className="text-lg font-semibold text-gray-800 mb-2">
+                                  <span className="text-blue-600">{rule.chapter}장 {rule.section}조</span>
+                                  <span className="mx-2">|</span>
+                                  <span>{rule.title}</span>
+                                </h4>
+                                <p className="text-gray-700 whitespace-pre-line">{rule.content}</p>
+                              </div>
+                            ))
+                        ) : (
+                          <p className="text-gray-500 text-center py-4">등록된 회칙이 없습니다.</p>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                }
               </div>
               
               <div className="mt-6 flex justify-end space-x-3">
