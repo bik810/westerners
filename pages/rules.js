@@ -20,22 +20,32 @@ export default function Rules() {
   
   const [rulesData, setRulesData] = useState({
     general: {
+      id: 'general',
+      order: 1,
       title: '단체 정의',
       rules: []
     },
     members: {
+      id: 'members',
+      order: 2,
       title: '회원',
       rules: []
     },
     finance: {
+      id: 'finance',
+      order: 3,
       title: '재정',
       rules: []
     },
     regular: {
+      id: 'regular',
+      order: 4,
       title: '정기 모임',
       rules: []
     },
     safety: {
+      id: 'safety',
+      order: 5,
       title: '안전',
       rules: []
     }
@@ -56,6 +66,8 @@ export default function Rules() {
           // 기존 데이터를 새로운 구조로 변환
           const convertedData = Object.keys(data).reduce((acc, key) => {
             acc[key] = {
+              id: key,
+              order: data[key].order,
               title: data[key].title || getDefaultTitle(key),
               rules: Array.isArray(data[key]) ? data[key] : data[key].rules || []
             };
@@ -66,30 +78,40 @@ export default function Rules() {
           // 초기 데이터 설정
           const defaultRules = {
             general: {
+              id: 'general',
+              order: 1,
               title: '단체 정의',
               rules: [
                 { id: 'g1', chapter: '1', section: '1', title: '명칭', content: '모임 명칭은 \'Westerners (한글명: 서쪽모임)\'으로 한다.' }
               ]
             },
             members: {
+              id: 'members',
+              order: 2,
               title: '회원',
               rules: [
                 { id: 'm1', chapter: '2', section: '1', title: '구성', content: '모임은 회장 1명과 총무 1명의 임원단과 일반 회원들로 구성한다.' }
               ]
             },
             finance: {
+              id: 'finance',
+              order: 3,
               title: '재정',
               rules: [
                 { id: 'f1', chapter: '3', section: '1', title: '회비', content: '정기 회비는 임원단은 월 SGD 40, 일반 회원은 월 SGD 50으로 정한다.' }
               ]
             },
             regular: {
+              id: 'regular',
+              order: 4,
               title: '정기 모임',
               rules: [
                 { id: 'r1', chapter: '4', section: '1', title: '주기', content: '정기 모임은 2달 간격으로 진행한다.' }
               ]
             },
             safety: {
+              id: 'safety',
+              order: 5,
               title: '안전',
               rules: [
                 { id: 's1', chapter: '5', section: '1', title: '안전', content: '정기 모임 시, 모임 규정에 포함될 안전 관련 의결을 진행한다.' }
@@ -195,12 +217,12 @@ export default function Rules() {
   // 회칙 추가
   const handleAddRule = () => {
     const newRule = {
-      id: `${activeTab[0]}${rulesData[activeTab].length + 1}`,
+      id: `${activeTab[0]}${rulesData[activeTab].rules.length + 1}`,
       chapter: activeTab === 'general' ? '1' : 
                activeTab === 'members' ? '2' : 
                activeTab === 'finance' ? '3' : 
                activeTab === 'regular' ? '4' : '5',
-      section: `${rulesData[activeTab].length + 1}`,
+      section: `${rulesData[activeTab].rules.length + 1}`,
       title: '',
       content: ''
     };
@@ -235,6 +257,68 @@ export default function Rules() {
     } catch (err) {
       console.error('회칙 삭제 중 오류 발생:', err);
       alert('회칙 삭제 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 장 추가 함수
+  const handleAddChapter = async () => {
+    try {
+      const newId = `chapter_${Date.now()}`;
+      const newOrder = Math.max(...Object.values(rulesData).map(chapter => chapter.order)) + 1;
+      
+      const updatedRulesData = {
+        ...rulesData,
+        [newId]: {
+          id: newId,
+          order: newOrder,
+          title: `제 ${newOrder} 장`,
+          rules: []
+        }
+      };
+
+      // Firestore에 저장
+      const rulesRef = doc(db, 'settings', 'rules');
+      await setDoc(rulesRef, updatedRulesData);
+      
+      // 상태 업데이트
+      setRulesData(updatedRulesData);
+      setActiveTab(newId);
+      
+      alert('새로운 장이 추가되었습니다.');
+    } catch (err) {
+      console.error('장 추가 중 오류 발생:', err);
+      alert('장 추가 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 장 삭제 함수
+  const handleDeleteChapter = async (chapterId) => {
+    if (!confirm('이 장을 삭제하시겠습니까? 포함된 모든 조항이 함께 삭제됩니다.')) return;
+    
+    try {
+      const updatedRulesData = { ...rulesData };
+      delete updatedRulesData[chapterId];
+
+      // 순서 재정렬
+      let order = 1;
+      Object.values(updatedRulesData)
+        .sort((a, b) => a.order - b.order)
+        .forEach(chapter => {
+          chapter.order = order++;
+        });
+
+      // Firestore에 저장
+      const rulesRef = doc(db, 'settings', 'rules');
+      await setDoc(rulesRef, updatedRulesData);
+      
+      // 상태 업데이트
+      setRulesData(updatedRulesData);
+      setActiveTab(Object.keys(updatedRulesData)[0]);
+      
+      alert('장이 삭제되었습니다.');
+    } catch (err) {
+      console.error('장 삭제 중 오류 발생:', err);
+      alert('장 삭제 중 오류가 발생했습니다.');
     }
   };
 
@@ -274,57 +358,30 @@ export default function Rules() {
           <div className="container mx-auto px-6">
             <div className="bg-white rounded-xl shadow-xl overflow-hidden">
               {/* Tabs */}
-              <div className="flex flex-wrap border-b">
-                <button
-                  onClick={() => setActiveTab('general')}
-                  className={`px-6 py-4 text-sm font-medium transition-colors duration-300 ${
-                    activeTab === 'general'
-                      ? 'text-blue-600 border-b-2 border-blue-600'
-                      : 'text-gray-500 hover:text-blue-600'
-                  }`}
-                >
-                  제 1 장 단체 정의
-                </button>
-                <button
-                  onClick={() => setActiveTab('members')}
-                  className={`px-6 py-4 text-sm font-medium transition-colors duration-300 ${
-                    activeTab === 'members'
-                      ? 'text-blue-600 border-b-2 border-blue-600'
-                      : 'text-gray-500 hover:text-blue-600'
-                  }`}
-                >
-                  제 2 장 회원
-                </button>
-                <button
-                  onClick={() => setActiveTab('finance')}
-                  className={`px-6 py-4 text-sm font-medium transition-colors duration-300 ${
-                    activeTab === 'finance'
-                      ? 'text-blue-600 border-b-2 border-blue-600'
-                      : 'text-gray-500 hover:text-blue-600'
-                  }`}
-                >
-                  제 3 장 회비
-                </button>
-                <button
-                  onClick={() => setActiveTab('regular')}
-                  className={`px-6 py-4 text-sm font-medium transition-colors duration-300 ${
-                    activeTab === 'regular'
-                      ? 'text-blue-600 border-b-2 border-blue-600'
-                      : 'text-gray-500 hover:text-blue-600'
-                  }`}
-                >
-                  제 4 장 정기 모임
-                </button>
-                <button
-                  onClick={() => setActiveTab('safety')}
-                  className={`px-6 py-4 text-sm font-medium transition-colors duration-300 ${
-                    activeTab === 'safety'
-                      ? 'text-blue-600 border-b-2 border-blue-600'
-                      : 'text-gray-500 hover:text-blue-600'
-                  }`}
-                >
-                  제 5 장 안건
-                </button>
+              <div className="flex flex-wrap border-b relative">
+                {Object.values(rulesData)
+                  .sort((a, b) => a.order - b.order)
+                  .map((chapter) => (
+                  <button
+                    key={chapter.id}
+                    onClick={() => setActiveTab(chapter.id)}
+                    className={`px-6 py-4 text-sm font-medium transition-colors duration-300 ${
+                      activeTab === chapter.id
+                        ? 'text-blue-600 border-b-2 border-blue-600'
+                        : 'text-gray-500 hover:text-blue-600'
+                    }`}
+                  >
+                    제 {chapter.order} 장 {chapter.title}
+                  </button>
+                ))}
+                {isEditMode && canEdit && (
+                  <button
+                    onClick={handleAddChapter}
+                    className="px-4 py-2 ml-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 my-2"
+                  >
+                    + 새 장 추가
+                  </button>
+                )}
               </div>
 
               {/* Tab Content */}
@@ -340,18 +397,23 @@ export default function Rules() {
                     <div className="flex justify-between items-center mb-6">
                       <div className="flex items-center space-x-4">
                         <h2 className="text-2xl font-bold text-gray-800">
-                          제 {activeTab === 'general' ? '1' : 
-                              activeTab === 'members' ? '2' :
-                              activeTab === 'finance' ? '3' :
-                              activeTab === 'regular' ? '4' : '5'} 장
+                          제 {rulesData[activeTab].order} 장
                         </h2>
                         {isEditMode && canEdit ? (
-                          <input
-                            type="text"
-                            value={rulesData[activeTab].title}
-                            onChange={(e) => handleChapterTitleChange(activeTab, e.target.value)}
-                            className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="text"
+                              value={rulesData[activeTab].title}
+                              onChange={(e) => handleChapterTitleChange(activeTab, e.target.value)}
+                              className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <button
+                              onClick={() => handleDeleteChapter(activeTab)}
+                              className="text-red-600 hover:text-red-800 px-2 py-1"
+                            >
+                              장 삭제
+                            </button>
+                          </div>
                         ) : (
                           <span className="text-2xl font-bold text-gray-800">
                             {rulesData[activeTab].title}
