@@ -120,6 +120,18 @@ input, textarea, select {
   }
 }
 
+@keyframes fadeOutDown {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+}
+
 .animate-fade-in-up {
   animation: fadeInUp 0.8s ease-out forwards;
 }
@@ -134,6 +146,10 @@ input, textarea, select {
 
 .animate-bounce-slow {
   animation: bounce-slow 2s infinite;
+}
+
+.animate-fade-out-down {
+  animation: fadeOutDown 0.3s ease-out forwards;
 }
 
 .animation-delay-300 {

@@ -14,6 +14,7 @@ export default function Home() {
   const [currentExecutive, setCurrentExecutive] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [showMeetingPopup, setShowMeetingPopup] = useState(true);
   
   // 권한 확인 함수
   const canEdit = userProfile && (userProfile.role === 'admin' || userProfile.role === 'treasurer');
@@ -271,8 +272,8 @@ export default function Home() {
       />
       
       {/* 다음 정기모임 팝업 */}
-      {currentUser && nextMeeting && (nextMeeting.date || nextMeeting.time || nextMeeting.location) && (
-        <div className="fixed bottom-6 right-6 max-w-sm w-full bg-white rounded-xl shadow-2xl overflow-hidden z-50 transform transition-all duration-300 animate-fade-in-up">
+      {currentUser && nextMeeting && (nextMeeting.date || nextMeeting.time || nextMeeting.location) && showMeetingPopup && (
+        <div className="meeting-popup fixed bottom-6 left-4 right-4 md:left-auto md:right-6 max-w-sm mx-auto md:mx-0 bg-white rounded-xl shadow-2xl overflow-hidden z-50 transform transition-all duration-300 animate-fade-in-up">
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 py-3 px-4 text-white flex justify-between items-center">
             <h2 className="text-md font-bold flex items-center">
               <svg className="w-5 h-5 mr-2 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -280,17 +281,33 @@ export default function Home() {
               </svg>
               다음 정기모임 안내
             </h2>
-            {canEdit && (
+            <div className="flex items-center space-x-2">
+              {canEdit && (
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="bg-white text-blue-600 hover:bg-blue-50 font-medium py-1 px-2 rounded-lg transition-all duration-300 flex items-center text-xs"
+                >
+                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                  </svg>
+                  수정
+                </button>
+              )}
               <button
-                onClick={() => setIsEditModalOpen(true)}
-                className="bg-white text-blue-600 hover:bg-blue-50 font-medium py-1 px-2 rounded-lg transition-all duration-300 flex items-center text-xs"
+                onClick={() => {
+                  const popup = document.querySelector(".meeting-popup");
+                  popup.classList.add("animate-fade-out-down");
+                  setTimeout(() => {
+                    setShowMeetingPopup(false);
+                  }, 300);
+                }}
+                className="bg-blue-700 hover:bg-blue-800 text-white rounded-full w-6 h-6 flex items-center justify-center transition-colors"
               >
-                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
-                수정
               </button>
-            )}
+            </div>
           </div>
           
           <div className="p-4">
