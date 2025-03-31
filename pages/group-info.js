@@ -96,7 +96,92 @@ export default function GroupInfo() {
         const rulesSnapshot = await getDoc(rulesRef);
         
         if (rulesSnapshot.exists()) {
-          setRulesData(rulesSnapshot.data());
+          const rawData = rulesSnapshot.data();
+          console.log('불러온 원본 회칙 데이터:', rawData);
+          
+          // 데이터 구조 확인 및 변환
+          const convertedData = {};
+          
+          // 각 카테고리별로 처리
+          Object.keys(rawData).forEach(key => {
+            const data = rawData[key];
+            
+            // 새 형식: {id, order, title, rules: []} 구조
+            if (data && data.rules && Array.isArray(data.rules)) {
+              convertedData[key] = data;
+            }
+            // 이전 형식: 배열 구조 [rule1, rule2, ...]
+            else if (Array.isArray(data)) {
+              // 이전 형식이면 새 형식으로 변환
+              const categoryMap = {
+                'general': { order: 1, title: '단체 정의' },
+                'members': { order: 2, title: '회원' },
+                'finance': { order: 3, title: '재정' },
+                'regular': { order: 4, title: '정기 모임' },
+                'safety': { order: 5, title: '안전' }
+              };
+              
+              convertedData[key] = {
+                id: key,
+                order: categoryMap[key]?.order || 99,
+                title: categoryMap[key]?.title || '기타',
+                rules: data
+              };
+            }
+            // 빈 카테고리인 경우 초기화
+            else {
+              convertedData[key] = {
+                id: key,
+                order: {
+                  'general': 1,
+                  'members': 2,
+                  'finance': 3,
+                  'regular': 4,
+                  'safety': 5
+                }[key] || 99,
+                title: {
+                  'general': '단체 정의',
+                  'members': '회원',
+                  'finance': '재정',
+                  'regular': '정기 모임',
+                  'safety': '안전'
+                }[key] || '기타',
+                rules: []
+              };
+            }
+          });
+          
+          // 기본 카테고리가 없으면 추가
+          ['general', 'members', 'finance', 'regular', 'safety'].forEach(key => {
+            if (!convertedData[key]) {
+              convertedData[key] = {
+                id: key,
+                order: {
+                  'general': 1,
+                  'members': 2,
+                  'finance': 3,
+                  'regular': 4,
+                  'safety': 5
+                }[key],
+                title: {
+                  'general': '단체 정의',
+                  'members': '회원',
+                  'finance': '재정',
+                  'regular': '정기 모임',
+                  'safety': '안전'
+                }[key],
+                rules: []
+              };
+            }
+          });
+          
+          console.log('변환된 회칙 데이터:', convertedData);
+          
+          // 변환된 데이터를 Firestore에 저장
+          await setDoc(rulesRef, convertedData);
+          
+          // 상태 업데이트
+          setRulesData(convertedData);
         }
         
         setError(null);
@@ -432,16 +517,12 @@ export default function GroupInfo() {
     try {
       // 텍스트를 파싱하여 구조화된 데이터로 변환
       const chaptersText = rulesModalContent.split('\n\n\n');
-      const newRulesData = {
-        general: [],
-        members: [],
-        finance: [],
-        regular: [],
-        safety: []
-      };
+      
+      // 기존 데이터를 유지하면서 업데이트
+      const newRulesData = { ...rulesData };
       
       // 새로운 장 정보를 파싱하고 ID 부여
-      chaptersText.forEach(chapterText => {
+      chaptersText.forEach((chapterText, index) => {
         if (!chapterText.trim()) return;
         
         const [chapterHeader, ...rulesText] = chapterText.split('\n\n');
@@ -462,11 +543,6 @@ export default function GroupInfo() {
         };
         
         const category = categoryMap[chapterNumber] || `chapter_${chapterNumber}`;
-        
-        // 해당 카테고리가 없으면 생성
-        if (!newRulesData[category]) {
-          newRulesData[category] = [];
-        }
         
         // 장별 정보 설정
         newRulesData[category] = {
@@ -499,7 +575,7 @@ export default function GroupInfo() {
       });
       
       // 디버깅 로그
-      console.log('파싱된 회칙 데이터:', newRulesData);
+      console.log('저장할 회칙 데이터:', newRulesData);
       
       // Firestore에 저장
       const rulesRef = doc(db, 'settings', 'rules');
@@ -508,13 +584,23 @@ export default function GroupInfo() {
       // 상태 업데이트
       setRulesData(newRulesData);
       setIsRulesEditMode(false);
+      setIsRulesModalOpen(false); // 저장 후 모달 닫기
       
-      // 모달 닫기 전에 데이터 다시 불러오기
+      // 데이터 새로고침
       const rulesSnapshot = await getDoc(rulesRef);
       if (rulesSnapshot.exists()) {
         const data = rulesSnapshot.data();
-        console.log('서버에서 불러온 데이터:', data);
+        console.log('저장 후 불러온 데이터:', data);
         setRulesData(data);
+        
+        // 탭 설정: 첫 번째 장으로 설정
+        const sortedChapters = Object.values(data)
+          .filter(chapter => chapter && chapter.rules)
+          .sort((a, b) => a.order - b.order);
+          
+        if (sortedChapters.length > 0) {
+          setRulesActiveTab(sortedChapters[0].id);
+        }
       }
       
       alert('회칙이 저장되었습니다.');
