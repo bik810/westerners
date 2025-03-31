@@ -89,8 +89,8 @@ export default function Header() {
             </Link>
           )}
           
-          {/* 회비 관리 메뉴 - 총무/관리자만 */}
-          {currentUser && userProfile && (userProfile.role === 'treasurer' || userProfile.role === 'admin') && (
+          {/* 회비 관리 메뉴 - 모든 로그인 사용자에게 표시 */}
+          {currentUser && (
             <Link 
               href="/fees" 
               className={`font-medium relative overflow-hidden group ${
@@ -211,8 +211,8 @@ export default function Header() {
             </Link>
           )}
           
-          {/* 회비 관리 메뉴 - 총무/관리자만 */}
-          {currentUser && userProfile && (userProfile.role === 'treasurer' || userProfile.role === 'admin') && (
+          {/* 회비 관리 메뉴 - 모든 로그인 사용자에게 표시 */}
+          {currentUser && (
             <Link 
               href="/fees" 
               className={`block py-3 font-medium hover:text-blue-600 transition-all duration-300 transform hover:translate-x-2 ${

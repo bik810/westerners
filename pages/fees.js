@@ -374,7 +374,7 @@ export default function Fees() {
   };
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requiredRole={null}>
       <div className="flex flex-col min-h-screen">
         <Head>
           <title>Westerners - 회비 관리</title>
