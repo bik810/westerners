@@ -19,11 +19,26 @@ export default function Rules() {
   const canEdit = userProfile && (userProfile.role === 'admin' || userProfile.role === 'treasurer');
   
   const [rulesData, setRulesData] = useState({
-    general: [],
-    members: [],
-    finance: [],
-    regular: [],
-    safety: []
+    general: {
+      title: '단체 정의',
+      rules: []
+    },
+    members: {
+      title: '회원',
+      rules: []
+    },
+    finance: {
+      title: '재정',
+      rules: []
+    },
+    regular: {
+      title: '정기 모임',
+      rules: []
+    },
+    safety: {
+      title: '안전',
+      rules: []
+    }
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -37,39 +52,51 @@ export default function Rules() {
         const rulesSnapshot = await getDoc(rulesRef);
         
         if (rulesSnapshot.exists()) {
-          setRulesData(rulesSnapshot.data());
+          const data = rulesSnapshot.data();
+          // 기존 데이터를 새로운 구조로 변환
+          const convertedData = Object.keys(data).reduce((acc, key) => {
+            acc[key] = {
+              title: data[key].title || getDefaultTitle(key),
+              rules: Array.isArray(data[key]) ? data[key] : data[key].rules || []
+            };
+            return acc;
+          }, {});
+          setRulesData(convertedData);
         } else {
-          // 초기 데이터가 없는 경우 기본 데이터 설정
+          // 초기 데이터 설정
           const defaultRules = {
-            general: [
-              { id: 'g1', chapter: '1', section: '1', title: '명칭', content: '모임 명칭은 \'Westerners (한글명: 서쪽모임)\'으로 한다.' }
-            ],
-            members: [
-              { id: 'm1', chapter: '2', section: '1', title: '구성', content: '모임은 회장 1명과 총무 1명의 임원단과 일반 회원들로 구성한다.' },
-              { id: 'm2', chapter: '2', section: '2', title: '임기', content: '회장의 임기는 6개월이며, 정기 모임 시 회원들의 투표를 통해 다수결의 원칙으로 선출한다.' },
-              { id: 'm3', chapter: '2', section: '3', title: '역할', content: '총무는 선출된 회장이 지정하며, 임기는 회장과 동일하다.' },
-              { id: 'm4', chapter: '2', section: '4', title: '책임', content: '총무는 모임 회비를 관리하며, 매월 회비 정산을 책임진다.' },
-              { id: 'm5', chapter: '2', section: '5', title: '가입', content: '신규 회원은 전원 만장일치 시에만 가입이 가능하다.' }
-            ],
-            finance: [
-              { id: 'f1', chapter: '3', section: '1', title: '회비', content: '정기 회비는 임원단은 월 SGD 40, 일반 회원은 월 SGD 50으로 정한다.' },
-              { id: 'f2', chapter: '3', section: '2', title: '납부', content: '정기 회비는 매월 21일에 총무에게 납부한다.' }
-            ],
-            regular: [
-              { id: 'r1', chapter: '4', section: '1', title: '주기', content: '정기 모임은 2달 간격으로 진행한다.' },
-              { id: 'r2', chapter: '4', section: '2', title: '장소', content: '정기 모임 장소는 회장이 결정한다.' },
-              { id: 'r3', chapter: '4', section: '3', title: '주종', content: '정기 모임 시 주종은 매 모임 다른 주종으로 선택한다.' },
-              { id: 'r4', chapter: '4', section: '4', title: '기념', content: '정기 모임 시 총무는 기념사진을 촬영하여 장부에 보관한다.' },
-              { id: 'r5', chapter: '4', section: '5', title: '손님', content: '정기모임 시 자유롭게 손님 초대가 가능하며, 손님은 정기모임 비용의 1/n을 납부한다.' }
-            ],
-            safety: [
-              { id: 's1', chapter: '5', section: '1', title: '안전', content: '정기 모임 시, 모임 규정에 포함될 안전 관련 의결을 진행한다.' },
-              { id: 's2', chapter: '5', section: '2', title: '상정', content: '안건은 회원 누구나 자유롭게 상정할 수 있으며, 전체 유효 표의 과반수 찬성 시 규정에 추가된다.' },
-              { id: 's3', chapter: '5', section: '3', title: '권한', content: '안건 의결 시, 회장은 2표의 권한이 있으며, 그 외 회원은 1표의 권한을 갖는다.' }
-            ]
+            general: {
+              title: '단체 정의',
+              rules: [
+                { id: 'g1', chapter: '1', section: '1', title: '명칭', content: '모임 명칭은 \'Westerners (한글명: 서쪽모임)\'으로 한다.' }
+              ]
+            },
+            members: {
+              title: '회원',
+              rules: [
+                { id: 'm1', chapter: '2', section: '1', title: '구성', content: '모임은 회장 1명과 총무 1명의 임원단과 일반 회원들로 구성한다.' }
+              ]
+            },
+            finance: {
+              title: '재정',
+              rules: [
+                { id: 'f1', chapter: '3', section: '1', title: '회비', content: '정기 회비는 임원단은 월 SGD 40, 일반 회원은 월 SGD 50으로 정한다.' }
+              ]
+            },
+            regular: {
+              title: '정기 모임',
+              rules: [
+                { id: 'r1', chapter: '4', section: '1', title: '주기', content: '정기 모임은 2달 간격으로 진행한다.' }
+              ]
+            },
+            safety: {
+              title: '안전',
+              rules: [
+                { id: 's1', chapter: '5', section: '1', title: '안전', content: '정기 모임 시, 모임 규정에 포함될 안전 관련 의결을 진행한다.' }
+              ]
+            }
           };
           
-          // Firestore에 기본 데이터 저장
           await setDoc(rulesRef, defaultRules);
           setRulesData(defaultRules);
         }
@@ -85,6 +112,43 @@ export default function Rules() {
     fetchRules();
   }, []);
 
+  // 기본 제목 가져오기 함수
+  const getDefaultTitle = (key) => {
+    const titles = {
+      general: '단체 정의',
+      members: '회원',
+      finance: '재정',
+      regular: '정기 모임',
+      safety: '안전'
+    };
+    return titles[key] || '';
+  };
+
+  // 장 제목 수정 함수
+  const handleChapterTitleChange = async (category, newTitle) => {
+    try {
+      const updatedRulesData = {
+        ...rulesData,
+        [category]: {
+          ...rulesData[category],
+          title: newTitle
+        }
+      };
+
+      // Firestore에 저장
+      const rulesRef = doc(db, 'settings', 'rules');
+      await setDoc(rulesRef, updatedRulesData);
+      
+      // 상태 업데이트
+      setRulesData(updatedRulesData);
+      
+      alert('장 제목이 수정되었습니다.');
+    } catch (err) {
+      console.error('장 제목 수정 중 오류 발생:', err);
+      alert('장 제목 수정 중 오류가 발생했습니다.');
+    }
+  };
+
   // 회칙 수정 모달 열기
   const handleEditRule = (rule) => {
     setEditingRule({ ...rule });
@@ -96,36 +160,20 @@ export default function Rules() {
     try {
       if (!editingRule) return;
       
-      // 새 회칙 추가인 경우
-      if (!rulesData[activeTab].find(rule => rule.id === editingRule.id)) {
-        // 전체 규칙 데이터 업데이트
-        const updatedRulesData = {
-          ...rulesData,
-          [activeTab]: [...rulesData[activeTab], editingRule]
-        };
-        
-        // Firestore에 저장
-        const rulesRef = doc(db, 'settings', 'rules');
-        await setDoc(rulesRef, updatedRulesData);
-        
-        // 상태 업데이트
-        setRulesData(updatedRulesData);
-        setIsModalOpen(false);
-        setEditingRule(null);
-        
-        alert('새 회칙이 성공적으로 추가되었습니다.');
-        return;
-      }
-      
-      // 기존 회칙 수정인 경우
-      const updatedRules = rulesData[activeTab].map(rule => 
+      const updatedRules = rulesData[activeTab].rules.map(rule => 
         rule.id === editingRule.id ? editingRule : rule
       );
       
-      // 전체 규칙 데이터 업데이트
+      if (!updatedRules.find(rule => rule.id === editingRule.id)) {
+        updatedRules.push(editingRule);
+      }
+      
       const updatedRulesData = {
         ...rulesData,
-        [activeTab]: updatedRules
+        [activeTab]: {
+          ...rulesData[activeTab],
+          rules: updatedRules
+        }
       };
       
       // Firestore에 저장
@@ -137,7 +185,7 @@ export default function Rules() {
       setIsModalOpen(false);
       setEditingRule(null);
       
-      alert('회칙이 성공적으로 수정되었습니다.');
+      alert(editingRule.id ? '회칙이 수정되었습니다.' : '새 회칙이 추가되었습니다.');
     } catch (err) {
       console.error('회칙 저장 중 오류 발생:', err);
       alert('회칙 저장 중 오류가 발생했습니다.');
@@ -166,19 +214,14 @@ export default function Rules() {
     if (!confirm('정말로 이 회칙을 삭제하시겠습니까?')) return;
     
     try {
-      // 현재 탭의 규칙 배열에서 해당 규칙 제거
-      const updatedRules = rulesData[activeTab].filter(rule => rule.id !== ruleId);
+      const updatedRules = rulesData[activeTab].rules.filter(rule => rule.id !== ruleId);
       
-      // 섹션 번호 재정렬
-      const reorderedRules = updatedRules.map((rule, index) => ({
-        ...rule,
-        section: `${index + 1}`
-      }));
-      
-      // 전체 규칙 데이터 업데이트
       const updatedRulesData = {
         ...rulesData,
-        [activeTab]: reorderedRules
+        [activeTab]: {
+          ...rulesData[activeTab],
+          rules: updatedRules
+        }
       };
       
       // Firestore에 저장
@@ -188,7 +231,7 @@ export default function Rules() {
       // 상태 업데이트
       setRulesData(updatedRulesData);
       
-      alert('회칙이 성공적으로 삭제되었습니다.');
+      alert('회칙이 삭제되었습니다.');
     } catch (err) {
       console.error('회칙 삭제 중 오류 발생:', err);
       alert('회칙 삭제 중 오류가 발생했습니다.');
@@ -295,13 +338,26 @@ export default function Rules() {
                 ) : (
                   <>
                     <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-2xl font-bold text-gray-800">
-                        {activeTab === 'general' && '제 1 장 단체 정의'}
-                        {activeTab === 'members' && '제 2 장 회원'}
-                        {activeTab === 'finance' && '제 3 장 재정'}
-                        {activeTab === 'regular' && '제 4 장 정기 모임'}
-                        {activeTab === 'safety' && '제 5 장 안전 규정'}
-                      </h2>
+                      <div className="flex items-center space-x-4">
+                        <h2 className="text-2xl font-bold text-gray-800">
+                          제 {activeTab === 'general' ? '1' : 
+                              activeTab === 'members' ? '2' :
+                              activeTab === 'finance' ? '3' :
+                              activeTab === 'regular' ? '4' : '5'} 장
+                        </h2>
+                        {isEditMode && canEdit ? (
+                          <input
+                            type="text"
+                            value={rulesData[activeTab].title}
+                            onChange={(e) => handleChapterTitleChange(activeTab, e.target.value)}
+                            className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        ) : (
+                          <span className="text-2xl font-bold text-gray-800">
+                            {rulesData[activeTab].title}
+                          </span>
+                        )}
+                      </div>
                       {isEditMode && canEdit && (
                         <button
                           onClick={() => handleAddRule()}
@@ -315,7 +371,7 @@ export default function Rules() {
                       )}
                     </div>
                     
-                    {rulesData[activeTab].map((rule) => (
+                    {rulesData[activeTab].rules.map((rule) => (
                       <div key={rule.id} className="mb-8 border-b pb-6">
                         <div className="flex justify-between items-start">
                           <div>
