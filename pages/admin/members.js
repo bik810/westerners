@@ -19,7 +19,6 @@ export default function MembersManagement() {
     email: '',
     password: '',
     name: '',
-    phone: '',
     role: 'member'
   });
   const { hasPermission } = useAuth();
@@ -54,7 +53,6 @@ export default function MembersManagement() {
       setFormData({
         email: user.email || '',
         name: user.name || '',
-        phone: user.phone || '',
         role: user.role || 'member'
       });
     } else {
@@ -62,7 +60,6 @@ export default function MembersManagement() {
         email: '',
         password: '',
         name: '',
-        phone: '',
         role: 'member'
       });
     }
@@ -79,7 +76,6 @@ export default function MembersManagement() {
       email: '',
       password: '',
       name: '',
-      phone: '',
       role: 'member'
     });
   };
@@ -120,7 +116,6 @@ export default function MembersManagement() {
         
         const userData = {
           name: formData.name,
-          phone: formData.phone,
           role: formData.role
         };
         
@@ -221,9 +216,6 @@ export default function MembersManagement() {
                               이메일
                             </th>
                             <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              연락처
-                            </th>
-                            <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               권한
                             </th>
                             <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -242,9 +234,6 @@ export default function MembersManagement() {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-gray-500">
                                 {user.email}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                                {user.phone || '-'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -317,22 +306,6 @@ export default function MembersManagement() {
                     <p className="text-sm font-medium text-gray-500">이메일</p>
                     <p className="text-base text-gray-900">{selectedUser?.email || '-'}</p>
                   </div>
-                  
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">연락처</p>
-                    <p className="text-base text-gray-900">{selectedUser?.phone || '-'}</p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">권한</p>
-                    <p className="text-base text-gray-900">
-                      {selectedUser?.role === 'admin' 
-                        ? '관리자' 
-                        : selectedUser?.role === 'treasurer' 
-                          ? '총무' 
-                          : '일반회원'}
-                    </p>
-                  </div>
                 </div>
               </div>
               
@@ -400,30 +373,6 @@ export default function MembersManagement() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  이메일
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="이메일 주소를 입력하세요"
-                  required
-                  disabled={modalType === 'edit'} // 수정 시에는 이메일 변경 불가
-                />
-              </div>
-              
-              {modalType === 'add' && (
-                <div className="bg-blue-50 p-4 rounded-md mb-4 text-sm text-blue-700">
-                  <p className="font-medium">계정이 생성되면 입력한 이메일로 비밀번호 설정 링크가 전송됩니다.</p>
-                  <p className="mt-1">회원은 이메일에 포함된 링크를 통해 직접 비밀번호를 설정할 수 있습니다.</p>
-                </div>
-              )}
-              
-              <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                   이름
                 </label>
@@ -435,23 +384,44 @@ export default function MembersManagement() {
                   onChange={handleFormChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="이름을 입력하세요"
+                  required
                 />
               </div>
-              
+
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                  연락처
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  아이디 (이메일)
                 </label>
                 <input
-                  type="text"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleFormChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="연락처를 입력하세요"
+                  placeholder="이메일 주소를 입력하세요"
+                  required
+                  disabled={modalType === 'edit'}
                 />
               </div>
+
+              {modalType === 'add' && (
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    비밀번호
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="비밀번호를 입력하세요"
+                    required
+                  />
+                </div>
+              )}
               
               <div>
                 <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
