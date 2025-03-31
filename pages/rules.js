@@ -400,85 +400,73 @@ export default function Rules() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">회칙</h1>
-            <p className="text-lg text-gray-600">웨스터너스의 회칙입니다.</p>
-          </div>
+      <div className="flex flex-col min-h-screen">
+        <Head>
+          <title>Westerners - 회칙</title>
+          <meta name="description" content="Westerners 모임의 회칙" />
+          <link rel="icon" href="/favicon.ico" />
+        </Head>
 
-          <div className="bg-white rounded-xl shadow-xl overflow-hidden">
-            <div className="p-6">
-              {isEditMode && canEdit ? (
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold text-gray-800">회칙 수정</h2>
-                    <div className="space-x-2">
-                      <button
-                        onClick={() => setIsEditMode(false)}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-300"
-                      >
-                        취소
-                      </button>
-                      <button
-                        onClick={handleSaveRules}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300"
-                      >
-                        저장
-                      </button>
-                    </div>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                    <p className="text-sm text-gray-600">
-                      • 장과 조항을 자유롭게 추가/수정/삭제할 수 있습니다.<br />
-                      • 각 장은 "제 X장 제목" 형식으로 작성해주세요.<br />
-                      • 각 조항은 "제 X조 제목" 형식으로 작성해주세요.<br />
-                      • 장과 장 사이, 조항과 조항 사이는 빈 줄로 구분해주세요.
-                    </p>
-                  </div>
-                  <textarea
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    className="w-full h-[600px] p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
-                    placeholder="회칙 내용을 입력하세요..."
-                  />
-                </div>
-              ) : (
-                <div className="space-y-8">
-                  <div className="flex justify-end mb-4">
-                    {canEdit && (
-                      <button
-                        onClick={() => setIsEditMode(true)}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300"
-                      >
-                        회칙 수정하기
-                      </button>
-                    )}
-                  </div>
-                  {Object.values(rulesData)
-                    .sort((a, b) => a.order - b.order)
-                    .map((chapter) => (
-                      <div key={chapter.id} className="space-y-4">
-                        <h2 className="text-2xl font-bold text-gray-800">
-                          제 {chapter.order}장 {chapter.title}
-                        </h2>
-                        <div className="space-y-6">
-                          {chapter.rules.map((rule) => (
-                            <div key={rule.id} className="space-y-2">
-                              <h3 className="text-xl font-semibold text-gray-700">
-                                제 {rule.section}조 {rule.title}
-                              </h3>
-                              <p className="text-gray-600 whitespace-pre-line">{rule.content}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
+        <Header />
+
+        {/* Hero Section */}
+        <section className="pt-32 pb-20 bg-gradient-to-r from-blue-900 to-blue-800 text-white">
+          <div className="container mx-auto px-6 text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">Westerners 회칙</h1>
+            <p className="text-xl text-blue-100 max-w-3xl mx-auto">
+              서쪽모임의 원활한 운영을 위한 규칙과 규정을 안내합니다
+            </p>
+            <div className="mt-8">
+              <button 
+                onClick={() => window.open('/rules/full', '_blank')}
+                className="bg-white text-blue-800 hover:bg-blue-100 font-semibold py-2 px-6 rounded-full transition-all duration-300"
+              >
+                전문보기
+              </button>
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* Rules Content */}
+        <section className="py-16 bg-gray-50">
+          <div className="container mx-auto px-6">
+            <div className="bg-white rounded-xl shadow-xl overflow-hidden">
+              <div className="p-6">
+                {isLoading ? (
+                  <div className="flex justify-center py-10">
+                    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : error ? (
+                  <div className="text-center py-10 text-red-500">{error}</div>
+                ) : (
+                  <div className="space-y-8">
+                    {Object.values(rulesData)
+                      .sort((a, b) => a.order - b.order)
+                      .map((chapter) => (
+                        <div key={chapter.id} className="space-y-4">
+                          <h2 className="text-2xl font-bold text-gray-800">
+                            제 {chapter.order}장 {chapter.title}
+                          </h2>
+                          <div className="space-y-6">
+                            {chapter.rules.map((rule) => (
+                              <div key={rule.id} className="space-y-2">
+                                <h3 className="text-xl font-semibold text-gray-700">
+                                  제 {rule.section}조 {rule.title}
+                                </h3>
+                                <p className="text-gray-600 whitespace-pre-line">{rule.content}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <Footer />
       </div>
     </ProtectedRoute>
   );
