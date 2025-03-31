@@ -53,6 +53,8 @@ export default function Rules() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [editContent, setEditContent] = useState('');
+
   // Firestore에서 회칙 데이터 불러오기
   useEffect(() => {
     const fetchRules = async () => {
@@ -74,15 +76,40 @@ export default function Rules() {
             return acc;
           }, {});
           setRulesData(convertedData);
+          
+          // 전체 내용을 텍스트로 변환
+          const fullText = Object.values(convertedData)
+            .sort((a, b) => a.order - b.order)
+            .map(chapter => {
+              const rulesText = chapter.rules
+                .map(rule => `제 ${rule.section}조 ${rule.title}\n${rule.content}`)
+                .join('\n\n');
+              return `제 ${chapter.order}장 ${chapter.title}\n\n${rulesText}`;
+            })
+            .join('\n\n\n');
+          setEditContent(fullText);
         } else {
-          // 초기 데이터 설정
+          // 기본 규칙 설정
           const defaultRules = {
             general: {
               id: 'general',
               order: 1,
               title: '단체 정의',
               rules: [
-                { id: 'g1', chapter: '1', section: '1', title: '명칭', content: '모임 명칭은 \'Westerners (한글명: 서쪽모임)\'으로 한다.' }
+                {
+                  id: 'general1',
+                  chapter: '1',
+                  section: '1',
+                  title: '명칭',
+                  content: '본 단체는 "웨스터너스"라 칭한다.'
+                },
+                {
+                  id: 'general2',
+                  chapter: '1',
+                  section: '2',
+                  title: '목적',
+                  content: '본 단체는 회원들의 친목과 정보 교환을 목적으로 한다.'
+                }
               ]
             },
             members: {
@@ -90,7 +117,13 @@ export default function Rules() {
               order: 2,
               title: '회원',
               rules: [
-                { id: 'm1', chapter: '2', section: '1', title: '구성', content: '모임은 회장 1명과 총무 1명의 임원단과 일반 회원들로 구성한다.' }
+                {
+                  id: 'members1',
+                  chapter: '2',
+                  section: '1',
+                  title: '회원 자격',
+                  content: '회원은 본 단체의 목적에 동의하는 자로 한다.'
+                }
               ]
             },
             finance: {
@@ -98,7 +131,13 @@ export default function Rules() {
               order: 3,
               title: '재정',
               rules: [
-                { id: 'f1', chapter: '3', section: '1', title: '회비', content: '정기 회비는 임원단은 월 SGD 40, 일반 회원은 월 SGD 50으로 정한다.' }
+                {
+                  id: 'finance1',
+                  chapter: '3',
+                  section: '1',
+                  title: '회비',
+                  content: '회비는 월 1회 정기 모임 시 납부한다.'
+                }
               ]
             },
             regular: {
@@ -106,7 +145,13 @@ export default function Rules() {
               order: 4,
               title: '정기 모임',
               rules: [
-                { id: 'r1', chapter: '4', section: '1', title: '주기', content: '정기 모임은 2달 간격으로 진행한다.' }
+                {
+                  id: 'regular1',
+                  chapter: '4',
+                  section: '1',
+                  title: '모임 일시',
+                  content: '정기 모임은 매주 수요일 저녁에 개최한다.'
+                }
               ]
             },
             safety: {
@@ -114,13 +159,31 @@ export default function Rules() {
               order: 5,
               title: '안전',
               rules: [
-                { id: 's1', chapter: '5', section: '1', title: '안전', content: '정기 모임 시, 모임 규정에 포함될 안전 관련 의결을 진행한다.' }
+                {
+                  id: 'safety1',
+                  chapter: '5',
+                  section: '1',
+                  title: '안전 책임',
+                  content: '모든 회원은 자신의 안전에 대한 책임을 진다.'
+                }
               ]
             }
           };
           
           await setDoc(rulesRef, defaultRules);
           setRulesData(defaultRules);
+          
+          // 기본 내용을 텍스트로 변환
+          const defaultText = Object.values(defaultRules)
+            .sort((a, b) => a.order - b.order)
+            .map(chapter => {
+              const rulesText = chapter.rules
+                .map(rule => `제 ${rule.section}조 ${rule.title}\n${rule.content}`)
+                .join('\n\n');
+              return `제 ${chapter.order}장 ${chapter.title}\n\n${rulesText}`;
+            })
+            .join('\n\n\n');
+          setEditContent(defaultText);
         }
         setError(null);
       } catch (err) {
@@ -178,36 +241,49 @@ export default function Rules() {
   };
 
   // 회칙 저장
-  const handleSaveRule = async () => {
+  const handleSaveRules = async () => {
+    if (!canEdit) return;
+    
     try {
-      if (!editingRule) return;
-      
-      const updatedRules = rulesData[activeTab].rules.map(rule => 
-        rule.id === editingRule.id ? editingRule : rule
-      );
-      
-      if (!updatedRules.find(rule => rule.id === editingRule.id)) {
-        updatedRules.push(editingRule);
-      }
-      
-      const updatedRulesData = {
-        ...rulesData,
-        [activeTab]: {
-          ...rulesData[activeTab],
-          rules: updatedRules
-        }
-      };
-      
+      // 텍스트를 파싱하여 구조화된 데이터로 변환
+      const chapters = editContent.split('\n\n\n').map(chapterText => {
+        const [chapterHeader, ...rulesText] = chapterText.split('\n\n');
+        const [order, title] = chapterHeader.split(' ').slice(1);
+        const id = `chapter_${order}`;
+        
+        const rules = rulesText.map(ruleText => {
+          const [ruleHeader, content] = ruleText.split('\n');
+          const [section, title] = ruleHeader.split(' ').slice(1);
+          return {
+            id: `${id}_${section}`,
+            chapter: order,
+            section,
+            title,
+            content
+          };
+        });
+
+        return {
+          id,
+          order: parseInt(order),
+          title,
+          rules
+        };
+      });
+
       // Firestore에 저장
       const rulesRef = doc(db, 'settings', 'rules');
-      await setDoc(rulesRef, updatedRulesData);
+      const rulesData = chapters.reduce((acc, chapter) => {
+        acc[chapter.id] = chapter;
+        return acc;
+      }, {});
+      await setDoc(rulesRef, rulesData);
       
       // 상태 업데이트
-      setRulesData(updatedRulesData);
-      setIsModalOpen(false);
-      setEditingRule(null);
+      setRulesData(rulesData);
+      setIsEditMode(false);
       
-      alert(editingRule.id ? '회칙이 수정되었습니다.' : '새 회칙이 추가되었습니다.');
+      alert('회칙이 저장되었습니다.');
     } catch (err) {
       console.error('회칙 저장 중 오류 발생:', err);
       alert('회칙 저장 중 오류가 발생했습니다.');
@@ -515,7 +591,7 @@ export default function Rules() {
                   취소
                 </button>
                 <button
-                  onClick={handleSaveRule}
+                  onClick={() => handleSaveRules()}
                   className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
                 >
                   저장
