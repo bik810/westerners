@@ -620,7 +620,7 @@ export default function Fees() {
                                       {formatCurrency(member.amount)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                                      {member.note || (member.paid ? '납부 완료' : '미납')}
+                                      {member.note || '-'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                       {canEdit && (
