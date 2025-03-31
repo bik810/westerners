@@ -95,22 +95,31 @@ export default function MembersManagement() {
     
     try {
       if (modalType === 'add') {
-        if (!formData.email || !formData.password) {
-          setError('이메일과 비밀번호를 모두 입력해주세요.');
-          return;
+        try {
+          setIsLoading(true);
+          // 계정 생성
+          const result = await FirestoreService.createUserWithEmail(
+            formData.email,
+            formData.password,
+            {
+              name: formData.name,
+              role: formData.role
+            }
+          );
+          
+          if (result.success) {
+            alert(`계정이 생성되었습니다.\n\n아이디: ${formData.email}\n비밀번호: ${formData.password}`);
+            handleCloseModal();
+            loadUsers(); // 사용자 목록 새로고침
+          } else {
+            alert(result.error || '계정 생성에 실패했습니다.');
+          }
+        } catch (err) {
+          console.error('회원 데이터 처리 중 오류 발생:', err);
+          setError('회원 데이터를 처리하는 중 오류가 발생했습니다.');
+        } finally {
+          setIsLoading(false);
         }
-        
-        console.log('계정 추가 시작:', formData.email);
-        
-        setIsLoading(true);
-        await FirestoreService.createUser(formData.email, formData.password, { role: formData.role });
-        
-        console.log('계정 추가 성공');
-        
-        alert(`계정이 생성되었습니다.\n\n이메일: ${formData.email}\n비밀번호: ${formData.password}`);
-        
-        handleCloseModal();
-        await loadUsers();
       } else if (modalType === 'edit') {
         if (!selectedUser) return;
         
@@ -127,8 +136,6 @@ export default function MembersManagement() {
     } catch (err) {
       console.error('회원 데이터 처리 중 오류 발생:', err);
       setError('회원 데이터를 처리하는 중 오류가 발생했습니다.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
