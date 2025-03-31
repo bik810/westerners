@@ -111,12 +111,10 @@ export default function MembersManagement() {
             alert(`계정이 생성되었습니다.\n\n아이디: ${formData.email}\n비밀번호: ${formData.password}`);
             handleCloseModal();
             loadUsers(); // 사용자 목록 새로고침
-          } else {
-            alert(result.error || '계정 생성에 실패했습니다.');
           }
         } catch (err) {
-          console.error('회원 데이터 처리 중 오류 발생:', err);
-          setError('회원 데이터를 처리하는 중 오류가 발생했습니다.');
+          console.error('계정 생성 중 오류:', err);
+          alert(err.message || '계정 생성에 실패했습니다.');
         } finally {
           setIsLoading(false);
         }
@@ -129,13 +127,12 @@ export default function MembersManagement() {
         };
         
         await FirestoreService.updateUser(selectedUser.id, userData);
+        handleCloseModal();
+        loadUsers();
       }
-      
-      await loadUsers();
-      handleCloseModal();
     } catch (err) {
-      console.error('회원 데이터 처리 중 오류 발생:', err);
-      setError('회원 데이터를 처리하는 중 오류가 발생했습니다.');
+      console.error('회원 데이터 처리 중 오류:', err);
+      alert(err.message || '회원 데이터를 처리하는 중 오류가 발생했습니다.');
     }
   };
 
