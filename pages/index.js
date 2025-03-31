@@ -137,100 +137,87 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 다음 정기모임 섹션 */}
-      <section id="next-meeting" className="py-16 md:py-20 bg-gradient-to-r from-blue-100 via-blue-50 to-blue-100">
+      {/* About Section */}
+      <section id="about" className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 max-w-6xl mx-auto">
             {/* 임원단 카드 */}
-            <div className="bg-white rounded-xl shadow-xl overflow-hidden h-full transform transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
-              <div className="bg-gradient-to-r from-blue-600 to-blue-700 py-4 px-6 text-white flex items-center justify-between">
-                <h2 className="text-lg md:text-xl font-bold flex items-center">
-                  <svg className="w-5 h-5 md:w-6 md:h-6 mr-2 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <div className="bg-white rounded-xl shadow-xl overflow-hidden transform transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 group">
+              <div className="h-2 md:h-3 bg-gradient-to-r from-blue-500 to-blue-700"></div>
+              <div className="p-6 md:p-8">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-6 md:mb-8 mx-auto transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+                  <svg className="w-8 h-8 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                   </svg>
-                  현 임원단
-                </h2>
-                <div className="bg-blue-500 rounded-full p-1.5">
-                  <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                  </svg>
                 </div>
-              </div>
-              
-              <div className="p-6 md:p-8">
+                <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-5 text-center">현 임원단</h3>
                 {isLoading ? (
                   <div className="flex justify-center py-6">
                     <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
                   </div>
                 ) : !currentUser ? (
-                  <div className="text-center py-8">
-                    <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <div className="text-center py-4">
+                    <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                     </svg>
-                    <h3 className="text-base font-medium text-gray-600 mb-2">로그인이 필요합니다</h3>
-                    <p className="text-sm text-gray-500 mb-4">
-                      임원단 정보를 확인하려면 로그인해주세요.
-                    </p>
-                    <Link href="/login" className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <h3 className="text-sm font-medium text-gray-600 mb-2">로그인이 필요합니다</h3>
+                    <Link href="/login" className="inline-flex items-center justify-center px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                       <span>로그인하기</span>
-                      <svg className="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                      </svg>
                     </Link>
                   </div>
                 ) : currentExecutive ? (
                   <div className="flex flex-col">
-                    <div className="bg-blue-50 rounded-lg border-2 border-blue-100 py-2.5 px-4 mb-6 inline-flex items-center self-start">
-                      <span className="text-blue-700 text-base font-bold whitespace-nowrap">제 {currentExecutive.generation}대</span>
+                    <div className="bg-blue-50 rounded-lg border-2 border-blue-100 py-2 px-3 mb-4 inline-flex items-center self-center">
+                      <span className="text-blue-700 text-sm font-bold whitespace-nowrap">제 {currentExecutive.generation}대</span>
                     </div>
                     
-                    <div className="space-y-5">
+                    <div className="space-y-3">
                       <div className="flex items-start">
-                        <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-2.5 rounded-full mr-4 flex-shrink-0">
-                          <svg className="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-2 rounded-full mr-3 flex-shrink-0">
+                          <svg className="w-4 h-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                           </svg>
                         </div>
                         <div>
                           <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">회장</h3>
-                          <p className="text-gray-800 text-base font-bold">{currentExecutive.president}</p>
+                          <p className="text-gray-800 text-sm font-bold">{currentExecutive.president}</p>
                         </div>
                       </div>
                       
                       <div className="flex items-start">
-                        <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-2.5 rounded-full mr-4 flex-shrink-0">
-                          <svg className="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-2 rounded-full mr-3 flex-shrink-0">
+                          <svg className="w-4 h-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                           </svg>
                         </div>
                         <div>
                           <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">총무</h3>
-                          <p className="text-gray-800 text-base font-bold">{currentExecutive.treasurer}</p>
+                          <p className="text-gray-800 text-sm font-bold">{currentExecutive.treasurer}</p>
                         </div>
                       </div>
                       
                       <div className="flex items-start">
-                        <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-2.5 rounded-full mr-4 flex-shrink-0">
-                          <svg className="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-2 rounded-full mr-3 flex-shrink-0">
+                          <svg className="w-4 h-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                           </svg>
                         </div>
                         <div>
                           <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">임기</h3>
-                          <p className="text-gray-800 text-base font-bold">{currentExecutive.term}</p>
+                          <p className="text-gray-800 text-sm font-bold">{currentExecutive.term}</p>
                         </div>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <div className="text-center py-4">
+                    <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                     </svg>
-                    <h3 className="text-base font-medium text-gray-600 mb-2">임원단 정보가 없습니다</h3>
+                    <h3 className="text-sm font-medium text-gray-600 mb-2">임원단 정보가 없습니다</h3>
                     {canEdit && (
-                      <p className="text-sm text-gray-500">
-                        모임 정보 페이지에서 임원단 정보를 입력해주세요.
+                      <p className="text-xs text-gray-500">
+                        모임 정보 페이지에서 입력해주세요.
                       </p>
                     )}
                   </div>
@@ -238,117 +225,6 @@ export default function Home() {
               </div>
             </div>
             
-            {/* 정기모임 카드 */}
-            <div className="bg-white rounded-xl shadow-xl overflow-hidden h-full transform transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
-              <div className="bg-gradient-to-r from-blue-600 to-blue-700 py-4 px-6 text-white flex justify-between items-center">
-                <h2 className="text-lg md:text-xl font-bold flex items-center">
-                  <svg className="w-5 h-5 md:w-6 md:h-6 mr-2 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                  </svg>
-                  다음 정기모임 안내
-                </h2>
-                {canEdit && (
-                  <button
-                    onClick={() => setIsEditModalOpen(true)}
-                    className="bg-white text-blue-600 hover:bg-blue-50 font-medium py-1.5 px-3 rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center text-sm"
-                  >
-                    <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                    </svg>
-                    수정
-                  </button>
-                )}
-              </div>
-              
-              <div className="p-6 md:p-8">
-                {isLoading ? (
-                  <div className="flex justify-center py-6">
-                    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
-                  </div>
-                ) : !currentUser ? (
-                  <div className="text-center py-8">
-                    <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
-                    <h3 className="text-base font-medium text-gray-600 mb-2">로그인이 필요합니다</h3>
-                    <p className="text-sm text-gray-500 mb-4">
-                      정기모임 정보를 확인하려면 로그인해주세요.
-                    </p>
-                    <Link href="/login" className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                      <span>로그인하기</span>
-                      <svg className="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                      </svg>
-                    </Link>
-                  </div>
-                ) : nextMeeting && (nextMeeting.date || nextMeeting.time || nextMeeting.location) ? (
-                  <div className="flex flex-col">
-                    <div className="bg-blue-50 rounded-lg border-2 border-blue-100 py-2.5 px-4 mb-6 inline-flex items-center self-start">
-                      <span className="text-blue-700 text-base font-bold whitespace-nowrap">제 {nextMeeting.meetingNumber}차</span>
-                    </div>
-                    
-                    <div className="space-y-5">
-                      <div className="flex items-start">
-                        <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-2.5 rounded-full mr-4 flex-shrink-0">
-                          <svg className="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                          </svg>
-                        </div>
-                        <div>
-                          <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">날짜</h3>
-                          <p className="text-gray-800 text-base font-bold">{nextMeeting.date || '미정'}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start">
-                        <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-2.5 rounded-full mr-4 flex-shrink-0">
-                          <svg className="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                          </svg>
-                        </div>
-                        <div>
-                          <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">시간</h3>
-                          <p className="text-gray-800 text-base font-bold">{nextMeeting.time || '미정'}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start">
-                        <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-2.5 rounded-full mr-4 flex-shrink-0">
-                          <svg className="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                          </svg>
-                        </div>
-                        <div>
-                          <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">장소</h3>
-                          <p className="text-gray-800 text-base font-bold">{nextMeeting.location || '미정'}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    <h3 className="text-base font-medium text-gray-600 mb-2">다음 정기모임 정보가 없습니다</h3>
-                    {canEdit && (
-                      <p className="text-sm text-gray-500">
-                        '수정' 버튼을 클릭하여 다음 정기모임 정보를 입력해주세요.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* About Section */}
-      <section id="about" className="py-16 md:py-24 bg-white">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 max-w-4xl mx-auto">
             <div className="bg-white rounded-xl shadow-xl overflow-hidden transform transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 group">
               <div className="h-2 md:h-3 bg-gradient-to-r from-blue-500 to-blue-700"></div>
               <div className="p-6 md:p-8">
@@ -393,6 +269,78 @@ export default function Home() {
         currentMeeting={nextMeeting}
         onUpdate={handleMeetingUpdate}
       />
+      
+      {/* 다음 정기모임 팝업 */}
+      {currentUser && nextMeeting && (nextMeeting.date || nextMeeting.time || nextMeeting.location) && (
+        <div className="fixed bottom-6 right-6 max-w-sm w-full bg-white rounded-xl shadow-2xl overflow-hidden z-50 transform transition-all duration-300 animate-fade-in-up">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 py-3 px-4 text-white flex justify-between items-center">
+            <h2 className="text-md font-bold flex items-center">
+              <svg className="w-5 h-5 mr-2 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              다음 정기모임 안내
+            </h2>
+            {canEdit && (
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="bg-white text-blue-600 hover:bg-blue-50 font-medium py-1 px-2 rounded-lg transition-all duration-300 flex items-center text-xs"
+              >
+                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                </svg>
+                수정
+              </button>
+            )}
+          </div>
+          
+          <div className="p-4">
+            <div className="flex flex-col">
+              <div className="bg-blue-50 rounded-lg border-2 border-blue-100 py-1.5 px-3 mb-3 inline-flex items-center self-start">
+                <span className="text-blue-700 text-sm font-bold whitespace-nowrap">제 {nextMeeting.meetingNumber}차</span>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-start">
+                  <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-2 rounded-full mr-3 flex-shrink-0">
+                    <svg className="w-4 h-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">날짜</h3>
+                    <p className="text-gray-800 text-sm font-bold">{nextMeeting.date || '미정'}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start">
+                  <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-2 rounded-full mr-3 flex-shrink-0">
+                    <svg className="w-4 h-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">시간</h3>
+                    <p className="text-gray-800 text-sm font-bold">{nextMeeting.time || '미정'}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start">
+                  <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-2 rounded-full mr-3 flex-shrink-0">
+                    <svg className="w-4 h-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">장소</h3>
+                    <p className="text-gray-800 text-sm font-bold">{nextMeeting.location || '미정'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
