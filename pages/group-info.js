@@ -942,20 +942,20 @@ export default function GroupInfo() {
                           <table className="min-w-full divide-y divide-gray-200">
                             <thead>
                               <tr>
-                                <th className="px-6 py-3 bg-gray-50 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                  세대
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs md:text-sm font-medium text-gray-700 uppercase tracking-wider">
+                                  구분
                                 </th>
-                                <th className="px-6 py-3 bg-gray-50 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs md:text-sm font-medium text-gray-700 uppercase tracking-wider">
                                   회장
                                 </th>
-                                <th className="px-6 py-3 bg-gray-50 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs md:text-sm font-medium text-gray-700 uppercase tracking-wider">
                                   총무
                                 </th>
-                                <th className="px-6 py-3 bg-gray-50 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs md:text-sm font-medium text-gray-700 uppercase tracking-wider">
                                   임기
                                 </th>
                                 {canEdit && (
-                                  <th className="px-6 py-3 bg-gray-50 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">
+                                  <th className="px-6 py-3 bg-gray-50 text-left text-xs md:text-sm font-medium text-gray-700 uppercase tracking-wider">
                                     관리
                                   </th>
                                 )}
@@ -975,16 +975,16 @@ export default function GroupInfo() {
                                         현재 {executive.generation}대
                                       </span>
                                     ) : (
-                                      <span className="text-sm md:text-base font-medium">{executive.generation}대</span>
+                                      <span className="text-sm md:text-base font-medium text-gray-900">{executive.generation}대</span>
                                     )}
                                   </td>
-                                  <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-sm md:text-base font-medium">
+                                  <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-sm md:text-base font-medium text-gray-900">
                                     {executive.president}
                                   </td>
-                                  <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-sm md:text-base font-medium">
+                                  <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-sm md:text-base font-medium text-gray-900">
                                     {executive.treasurer}
                                   </td>
-                                  <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-sm md:text-base font-medium">
+                                  <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-sm md:text-base font-medium text-gray-900">
                                     {executive.term}
                                   </td>
                                   {canEdit && (
