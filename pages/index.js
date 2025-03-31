@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useAuth } from '../lib/authContext';
-import { getNextMeeting, getCurrentExecutive } from '../lib/firestoreService';
+import { getNextMeeting, getCurrentExecutive, getGroupInfo, updateGroupInfo } from '../lib/firestoreService';
 import MeetingEditModal from '../components/MeetingEditModal';
 
 export default function Home() {
@@ -15,6 +15,10 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [showMeetingPopup, setShowMeetingPopup] = useState(true);
+  const [isIntroModalOpen, setIsIntroModalOpen] = useState(false);
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+  const [introText, setIntroText] = useState("");
+  const [activityText, setActivityText] = useState("");
   
   // 권한 확인 함수
   const canEdit = userProfile && (userProfile.role === 'admin' || userProfile.role === 'treasurer');
@@ -26,16 +30,23 @@ export default function Home() {
         setIsLoading(true);
         console.log('데이터 로딩 시작...');
         
-        const [meetingData, executiveData] = await Promise.all([
+        const [meetingData, executiveData, groupInfoData] = await Promise.all([
           getNextMeeting(),
-          getCurrentExecutive()
+          getCurrentExecutive(),
+          getGroupInfo()
         ]);
         
         console.log('정기모임 데이터:', meetingData);
         console.log('임원단 데이터:', executiveData);
+        console.log('모임 소개 데이터:', groupInfoData);
         
         setNextMeeting(meetingData);
         setCurrentExecutive(executiveData);
+        
+        if (groupInfoData) {
+          setIntroText(groupInfoData.intro || "");
+          setActivityText(groupInfoData.activity || "");
+        }
       } catch (err) {
         console.error('데이터 로드 중 오류:', err);
       } finally {
@@ -50,6 +61,36 @@ export default function Home() {
   const handleMeetingUpdate = (updatedMeeting) => {
     console.log('정기모임 정보 업데이트:', updatedMeeting);
     setNextMeeting(updatedMeeting);
+  };
+  
+  // 모임 소개 정보 업데이트 처리
+  const handleIntroUpdate = async () => {
+    try {
+      await updateGroupInfo({
+        intro: introText,
+        activity: activityText
+      });
+      setIsIntroModalOpen(false);
+      alert('모임 소개가 업데이트되었습니다.');
+    } catch (err) {
+      console.error('모임 소개 업데이트 중 오류:', err);
+      alert('업데이트 중 오류가 발생했습니다.');
+    }
+  };
+  
+  // 활동 내용 업데이트 처리
+  const handleActivityUpdate = async () => {
+    try {
+      await updateGroupInfo({
+        intro: introText,
+        activity: activityText
+      });
+      setIsActivityModalOpen(false);
+      alert('활동 내용이 업데이트되었습니다.');
+    } catch (err) {
+      console.error('활동 내용 업데이트 중 오류:', err);
+      alert('업데이트 중 오류가 발생했습니다.');
+    }
   };
 
   return (
@@ -226,6 +267,7 @@ export default function Home() {
               </div>
             </div>
             
+            {/* 모임 소개 카드 */}
             <div className="bg-white rounded-xl shadow-xl overflow-hidden transform transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 group">
               <div className="h-2 md:h-3 bg-gradient-to-r from-blue-500 to-blue-700"></div>
               <div className="p-6 md:p-8">
@@ -234,13 +276,26 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                   </svg>
                 </div>
-                <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-5 text-center">모임 소개</h3>
+                <div className="flex justify-between items-center mb-4 md:mb-5">
+                  <h3 className="text-lg md:text-xl font-bold text-gray-800 text-center flex-grow">모임 소개</h3>
+                  {canEdit && (
+                    <button
+                      onClick={() => setIsIntroModalOpen(true)}
+                      className="bg-blue-100 text-blue-600 hover:bg-blue-200 font-medium p-1.5 rounded-lg transition-all duration-300 flex items-center text-xs"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                      </svg>
+                    </button>
+                  )}
+                </div>
                 <p className="text-gray-600 text-sm md:text-base leading-relaxed text-center">
-                  Westerners는 싱가포르에서 근무하는 한국인들의 친목 모임입니다. 회원들 각자 처한 상황에서의 외로움과 어려움을 함께 나누고 서로에게 힘이 되어주는 따뜻한 모임입니다.
+                  {introText}
                 </p>
               </div>
             </div>
             
+            {/* 활동 내용 카드 */}
             <div className="bg-white rounded-xl shadow-xl overflow-hidden transform transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 group">
               <div className="h-2 md:h-3 bg-gradient-to-r from-blue-500 to-blue-700"></div>
               <div className="p-6 md:p-8">
@@ -249,11 +304,21 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                   </svg>
                 </div>
-                <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-5 text-center">활동 내용</h3>
+                <div className="flex justify-between items-center mb-4 md:mb-5">
+                  <h3 className="text-lg md:text-xl font-bold text-gray-800 text-center flex-grow">활동 내용</h3>
+                  {canEdit && (
+                    <button
+                      onClick={() => setIsActivityModalOpen(true)}
+                      className="bg-blue-100 text-blue-600 hover:bg-blue-200 font-medium p-1.5 rounded-lg transition-all duration-300 flex items-center text-xs"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                      </svg>
+                    </button>
+                  )}
+                </div>
                 <p className="text-gray-600 text-sm md:text-base leading-relaxed text-center">
-                  정기적인 모임을 통해 서로의 일상을 나누고 친목을 다집니다.
-                  싱가포르 생활 정보 공유, 함께하는 식사 모임, 특별 행사 등 다양한 활동으로 
-                  타국에서도 가족 같은 따뜻함을 느낄 수 있는 시간을 만들어갑니다.
+                  {activityText}
                 </p>
               </div>
             </div>
@@ -270,6 +335,74 @@ export default function Home() {
         currentMeeting={nextMeeting}
         onUpdate={handleMeetingUpdate}
       />
+      
+      {/* 모임 소개 수정 모달 */}
+      {isIntroModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl overflow-hidden max-w-lg w-full animate-fade-in-up">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 py-4 px-6 text-white">
+              <h2 className="text-xl font-bold">모임 소개 수정</h2>
+            </div>
+            <div className="p-6">
+              <textarea
+                value={introText}
+                onChange={(e) => setIntroText(e.target.value)}
+                className="w-full border-2 border-gray-300 rounded-lg p-3 mb-4 h-40 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 resize-none"
+                placeholder="모임 소개를 입력하세요..."
+              ></textarea>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setIsIntroModalOpen(false)}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleIntroUpdate}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  저장
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* 활동 내용 수정 모달 */}
+      {isActivityModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl overflow-hidden max-w-lg w-full animate-fade-in-up">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 py-4 px-6 text-white">
+              <h2 className="text-xl font-bold">활동 내용 수정</h2>
+            </div>
+            <div className="p-6">
+              <textarea
+                value={activityText}
+                onChange={(e) => setActivityText(e.target.value)}
+                className="w-full border-2 border-gray-300 rounded-lg p-3 mb-4 h-40 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 resize-none"
+                placeholder="활동 내용을 입력하세요..."
+              ></textarea>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setIsActivityModalOpen(false)}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleActivityUpdate}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  저장
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* 다음 정기모임 팝업 */}
       {currentUser && nextMeeting && (nextMeeting.date || nextMeeting.time || nextMeeting.location) && showMeetingPopup && (
