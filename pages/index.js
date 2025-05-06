@@ -5,16 +5,12 @@ import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useAuth } from '../lib/authContext';
-import { getNextMeeting, getCurrentExecutive, getGroupInfo, updateGroupInfo } from '../lib/firestoreService';
-import MeetingEditModal from '../components/MeetingEditModal';
+import { getCurrentExecutive, getGroupInfo, updateGroupInfo } from '../lib/firestoreService';
 
 export default function Home() {
   const { currentUser, userProfile } = useAuth();
-  const [nextMeeting, setNextMeeting] = useState(null);
   const [currentExecutive, setCurrentExecutive] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [showMeetingPopup, setShowMeetingPopup] = useState(true);
   const [isIntroModalOpen, setIsIntroModalOpen] = useState(false);
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [introText, setIntroText] = useState("");
@@ -23,24 +19,21 @@ export default function Home() {
   // 권한 확인 함수
   const canEdit = userProfile && (userProfile.role === 'admin' || userProfile.role === 'treasurer');
   
-  // 정기모임 정보와 임원단 정보 가져오기
+  // 임원단 정보와 모임 소개 정보 가져오기
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         console.log('데이터 로딩 시작...');
         
-        const [meetingData, executiveData, groupInfoData] = await Promise.all([
-          getNextMeeting(),
+        const [executiveData, groupInfoData] = await Promise.all([
           getCurrentExecutive(),
           getGroupInfo()
         ]);
         
-        console.log('정기모임 데이터:', meetingData);
         console.log('임원단 데이터:', executiveData);
         console.log('모임 소개 데이터:', groupInfoData);
         
-        setNextMeeting(meetingData);
         setCurrentExecutive(executiveData);
         
         if (groupInfoData) {
@@ -56,12 +49,6 @@ export default function Home() {
     
     fetchData();
   }, []);
-  
-  // 정기모임 정보 업데이트 처리
-  const handleMeetingUpdate = (updatedMeeting) => {
-    console.log('정기모임 정보 업데이트:', updatedMeeting);
-    setNextMeeting(updatedMeeting);
-  };
   
   // 모임 소개 정보 업데이트 처리
   const handleIntroUpdate = async () => {
@@ -328,14 +315,6 @@ export default function Home() {
 
       <Footer />
       
-      {/* 정기모임 정보 수정 모달 */}
-      <MeetingEditModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        currentMeeting={nextMeeting}
-        onUpdate={handleMeetingUpdate}
-      />
-      
       {/* 모임 소개 수정 모달 */}
       {isIntroModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -398,94 +377,6 @@ export default function Home() {
                 >
                   저장
                 </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* 다음 정기모임 팝업 */}
-      {currentUser && nextMeeting && (nextMeeting.date || nextMeeting.time || nextMeeting.location) && showMeetingPopup && (
-        <div className="meeting-popup fixed bottom-6 left-4 right-4 md:left-auto md:right-6 max-w-sm mx-auto md:mx-0 bg-white rounded-xl shadow-2xl overflow-hidden z-50 transform transition-all duration-300 animate-fade-in-up">
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 py-3 px-4 text-white flex justify-between items-center">
-            <h2 className="text-md font-bold flex items-center">
-              <svg className="w-5 h-5 mr-2 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
-              다음 정기모임 안내
-            </h2>
-            <div className="flex items-center space-x-2">
-              {canEdit && (
-                <button
-                  onClick={() => setIsEditModalOpen(true)}
-                  className="bg-white text-blue-600 hover:bg-blue-50 font-medium py-1 px-2 rounded-lg transition-all duration-300 flex items-center text-xs"
-                >
-                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                  </svg>
-                  수정
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  const popup = document.querySelector(".meeting-popup");
-                  popup.classList.add("animate-fade-out-down");
-                  setTimeout(() => {
-                    setShowMeetingPopup(false);
-                  }, 300);
-                }}
-                className="bg-blue-700 hover:bg-blue-800 text-white rounded-full w-6 h-6 flex items-center justify-center transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
-          </div>
-          
-          <div className="p-4">
-            <div className="flex flex-col">
-              <div className="bg-blue-50 rounded-lg border-2 border-blue-100 py-1.5 px-3 mb-3 inline-flex items-center self-start">
-                <span className="text-blue-700 text-sm font-bold whitespace-nowrap">제 {nextMeeting.meetingNumber}차</span>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-start">
-                  <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-2 rounded-full mr-3 flex-shrink-0">
-                    <svg className="w-4 h-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">날짜</h3>
-                    <p className="text-gray-800 text-sm font-bold">{nextMeeting.date || '미정'}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start">
-                  <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-2 rounded-full mr-3 flex-shrink-0">
-                    <svg className="w-4 h-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">시간</h3>
-                    <p className="text-gray-800 text-sm font-bold">{nextMeeting.time || '미정'}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start">
-                  <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-2 rounded-full mr-3 flex-shrink-0">
-                    <svg className="w-4 h-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-gray-900 text-xs font-semibold uppercase tracking-wider mb-1">장소</h3>
-                    <p className="text-gray-800 text-sm font-bold">{nextMeeting.location || '미정'}</p>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
